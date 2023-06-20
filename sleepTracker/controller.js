@@ -109,4 +109,4 @@ const captureSchduleLogs = async(schedules, schedule_date) => {
 }
 
 
-module.exports = router;
+
