@@ -58,7 +58,7 @@ const userMealRecommendationSchema = new mongoose.Schema({
     },
     user_picked: {
         type: Boolean,
-        required: true,
+        default:false,
     },
     added_by: { // dietition 
         type: mongoose.Schema.Types.ObjectId,

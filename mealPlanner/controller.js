@@ -62,10 +62,22 @@ exports.userMealRecommendationFetch = catchAsyncError(async(req,res, next) => {
 
 exports.userMealRecommendationDelete = catchAsyncError(async(req,res, next) => {
     try {
-        const meal_id = req.query.meal_id;
-        const meal = await Meal.MyModel.deleteOne({ _id: meal_id })
+        const meal_recom_id = req.query.meal_recom_id;
+        const meal = await UserMealRecommendation.deleteOne({ _id: meal_recom_id })
         res.status(201).json({success: true,message: "Success"});
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete user meal recommendations' });
+    }
+});
+
+exports.userMealRecommendationAdded = catchAsyncError(async(req,res, next) => {
+    try {
+        const meal_recom_id = req.query.meal_recom_id;
+        var user_meal_obj = await UserMealRecommendation.findById(meal_recom_id);
+        user_meal_obj.user_picked = true;
+        user_meal_obj.save()
+
+    } catch (error) {
+        res.status(500).json({ error: 'Something went wrong in the API' });
     }
 });
