@@ -58,8 +58,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please Enter the Goal"],
   },
-  
-});
+
+},{timestamps:true});
 
 userSchema.path("phone").validate(function validatePhone() {
   return this.phone > 999999999 && this.phone <= 9999999999;
