@@ -23,5 +23,11 @@ app.use(cors());
 app.get("/health", (req, res, next) => {
   res.send("OK");
 });
+const users = require("./routes/user");
+const common = require("./routes/common");
+const sleepTracker = require("./routes/sleepTracker");
+app.use("/api", users);
+app.use("/api", common);
+app.use("/api", sleepTracker);
 app.use(errorMiddleware);
 module.exports = app;

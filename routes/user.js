@@ -5,9 +5,9 @@ const userOtpVerfication = require("../users/userOtpVerfication");
 
 const router = express.Router();
 
-router.route("/register-user",userOtpVerfication,registration);
-router.route("/login-user",login);
-router.route("/update-user-profile",isAuthenticated,updateUserProfile);
-router.route("/change-user-password",isAuthenticated,changeUserPassword);
-router.route("/forget-password",userOtpVerfication,forgetPassword)
+router.route("/register-user").post(userOtpVerfication,registration);
+router.route("/login-user").post(login);
+router.route("/update-user-profile").put(isAuthenticated,updateUserProfile);
+router.route("/change-user-password").put(isAuthenticated,changeUserPassword);
+router.route("/forget-password").put(userOtpVerfication,forgetPassword);
 module.exports = router;
