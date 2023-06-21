@@ -26,8 +26,11 @@ app.get("/health", (req, res, next) => {
 const users = require("./routes/user");
 const common = require("./routes/common");
 const sleepTracker = require("./routes/sleepTracker");
+const progress = require("./routes/progress");
+
 app.use("/api", users);
 app.use("/api", common);
 app.use("/api", sleepTracker);
+app.use("/api", progress);
 app.use(errorMiddleware);
 module.exports = app;
