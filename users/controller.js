@@ -21,8 +21,8 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   if (
     !email ||
     !phone ||
-    first_name ||
-    last_name ||
+    !first_name ||
+    !last_name ||
     !password ||
     !gender ||
     !dob ||
@@ -96,16 +96,22 @@ exports.login = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander("All fields are required", 400));
   }
 });
-
+ 
+exports.getUser= catchAsyncError(async(req,res,next)=>{
+const user = await User.findById(req.user.id);
+if(!user) return next(new ErrorHander("user does n't exit",400))
+res.status(200).json({success:true,user:user})
+}
+) 
 exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user)
     return next(
       new ErrorHander("Some error occured. User doesn't exits Try again", 400)
     );
-  if (req.body.email || req.body.phone || req.body.password)
+  if (req.body.email || req.body.phone || req.body.password || req.body.type)
     return next(
-      new ErrorHander("you are not able to change the email, phone &", 400)
+      new ErrorHander("you are not able to change the email, phone & Type", 400)
     );
   const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
     new: true,
