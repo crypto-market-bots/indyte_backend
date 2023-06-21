@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
     minLength: [6, "password should be greater than or equal to 6 Characters"],
     select: false,
   },
-  role: {
+  type: {
     type: String,
     default: "user",
   },
