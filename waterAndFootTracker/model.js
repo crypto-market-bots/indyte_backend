@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const waterAndFootTracker = new mongoose.Schema(
+
+const waterAndFootTrackerSchema = new mongoose.Schema(
   {
     water_intake: {
       type: Number,
@@ -17,9 +18,8 @@ const waterAndFootTracker = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    create_time: {
-      type: Date,
-      default: Date.now,
+    schedule_time: {
+      type: Date
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -35,4 +35,42 @@ const waterAndFootTracker = new mongoose.Schema(
   { timestamps: true }
 );
 
+const waterAndFootTrackerLogSchema = new mongoose.Schema(
+  {
+    created_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "waterAndFootTracker",
+      required: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    water_intake: {
+      type: Number,
+      required: [true, "Please Enter water Intake"],
+    },
+    foot_steps: {
+      type: Number,
+      required: [true, "Please Enter foot steps"],
+    },
+    created_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
+
+const WaterAndFootTracker = mongoose.model(
+  "waterAndFootTracker",
+  waterAndFootTrackerSchema
+);
+const WaterAndFootTrackerLog = mongoose.model(
+  "waterAndFootTrackerLog",
+  waterAndFootTrackerLogSchema
+);
+module.exports = { WaterAndFootTracker, WaterAndFootTrackerLog };
