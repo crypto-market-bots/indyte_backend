@@ -122,7 +122,7 @@ exports.workoutUpdate = catchAsyncError(async(req,res, next) => {
         res.status(201).json({ success: true, message: "Success",});
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Server Error' });
+        res.status(500).json({ error: 'Failed workout update !' });
     }
 });
 
@@ -133,11 +133,11 @@ exports.workoutRecommendation = catchAsyncError(async(req,res, next) => {
         schedule_time_formatted = moment(schedule_time, 'HH:mm DD-MM-YYYY').toDate();
         // Create a new workout recommendation object
         const recommendation = new WorkoutRecommendation({
-        user_id,
-        workout_id,
-        difficulty,
-        schedule_time_formatted,
-        created_by
+            user_id,
+            workout_id,
+            difficulty,
+            schedule_time_formatted,
+            created_by
         });
 
         // Save the workout recommendation to the database
@@ -169,6 +169,77 @@ exports.workoutCompleted = catchAsyncError(async(req,res, next) => {   // api fo
 
         res.status(201).json({ success: true, message: "Success",});
     } catch (error) {
-        res.status(500).json({ error: 'Failed to create workout recommendation' });
+        res.status(500).json({ error: 'Failed to perform the action' });
     }
+});
+
+
+exports.fetchExercise = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
+    const exercise_id = req.params.exercise_id;
+    if (exercise_id) {
+      Exercise.findById(exercise_id)
+        .then((exercise) => {
+          if (!exercise) {
+            return res.status(404).json({ error: 'Exercise not found.' });
+          }
+          res.status(201).json({ success: true, message: exercise});
+        })
+        .catch((error) => {
+          res.status(500).json({ error: 'Failed to fetch exercise.' });
+        });
+    } else {
+      Exercise.find()
+        .then((exercises) => {
+            res.status(201).json({ success: true, message: exercises});
+        })
+        .catch((error) => {
+          res.status(500).json({ error: 'Failed to fetch exercises.' });
+        });
+    }
+});
+
+
+exports.fetchWorkout = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
+    const workout_id = req.params.workout_id;
+
+    if (workout_id) {
+      Workout.findById(workout_id)
+        .then((workout) => {
+          if (!workout) {
+            return res.status(404).json({ error: 'Workout not found.' });
+          }
+          res.status(201).json({ success: true, message: workout});
+        })
+        .catch((error) => {
+          res.status(500).json({ error: 'Failed to fetch workout.' });
+        });
+    } else {
+      Workout.find()
+        .then((workouts) => {
+            res.status(201).json({ success: true, message: workouts});
+        })
+        .catch((error) => {
+          res.status(500).json({ error: 'Failed to fetch workouts.' });
+        });
+    }
+});
+
+exports.fetchWorkoutRecommendations = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
+    const workout_recom_date = req.params.workout_recom_date;
+    const workout_recom_date_formatted =  moment(workout_recom_date, 'DD-MM-YYYY').toDate();
+
+    if (!workout_recom_date_formatted){
+        res.status(500).json({ error: 'workout_recom_date not found.' });
+    }
+
+    WorkoutRecommendation.find({ $and: [
+            { user : req.user.id },
+            { schedule_time: { $gte: workout_recom_date_formatted.toDate(), $lt: workout_recom_date_formatted.clone().endOf('day').toDate() } }
+            ]})
+    .then((recommendations) => {
+        res.status(201).json({ success: true, message: recommendations});
+    })
+    .catch((error) => {
+        res.status(500).json({ error: 'Failed to fetch workout recommendations.' });
+    });
 });
