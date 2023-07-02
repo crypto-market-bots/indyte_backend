@@ -39,8 +39,8 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
       } else {
         //decodedData.userID);
         req.user = await User.findById(decodedData.userID);
-        req.seller = await Seller.findById(decodedData.sellerID);
-        if (!req.user && !req.seller) {
+        
+        if (!req.user) {
           return next(
             new ErrorHander("You are not a Valid User or seller", 400)
           );
@@ -68,36 +68,18 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
 
 exports.authorizedRoles = (...roles) => {
   return (req, res, next) => {
-    //"in roles")
-    //console.log("hello seller outside");
-    if (req.seller) {
-      console.log("hello seller seller");
-
-      //"seller");
-      if (!roles.includes(req.seller.role)) {
+   
+      // console.log(roles);
+      console.log(req.user.type);
+      if (!roles.includes(req.user.type)) {
         return next(
           new ErrorHander(
-            `Role ${req.seller.role} is not allowed to access this resource`,
-            403
-          )
-        );
-      }
-      next();
-    } else if (req.user) {
-      //console.log("hello seller user");
-
-      //"user");
-      console.log(roles);
-      console.log(req.user.role);
-      if (!roles.includes(req.user.role)) {
-        return next(
-          new ErrorHander(
-            `Role ${req.user.role} is not allowed to access this resource`,
-            403
+            `Role ${req.user.type} is not allowed to access this resource`,
+            
           )
         );
       }
       next();
     }
-  };
-};
+
+  }
