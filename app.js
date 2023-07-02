@@ -28,11 +28,16 @@ const common = require("./routes/common");
 const sleepTracker = require("./routes/sleepTracker");
 const progress = require("./routes/progress");
 const workoutTracker = require("./routes/workoutTracker");
+const waterAndFootTracker = require("./routes/waterAndFootTracker");
+const mealPlanner = require("./routes/mealPlanner");
+
 
 app.use("/api", users);
 app.use("/api", common);
 app.use("/api", sleepTracker);
 app.use("/api", progress);
-app.use("/api", workoutTracker)
+app.use("/api", workoutTracker);
+app.use("/api", waterAndFootTracker);
+app.use("/api", mealPlanner);
 app.use(errorMiddleware);
 module.exports = app;
