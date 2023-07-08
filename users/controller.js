@@ -36,7 +36,7 @@ exports.registration = catchAsyncError(async (req, res, next) => {
     $or: [{ email: email }, { phone: phone }],
   });
   if (user) {
-    return next(new ErrorHander("User Already Exit", 400));
+    return next(new ErrorHander("User Already Exist", 400));
   }
   let trimmedpassword = password;
   trimmedpassword = trimmedpassword.trim();
@@ -53,8 +53,8 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
   const doc = await User.create(req.body)
-    .then((res) => {
-      res.status(201).json({
+    .then(() => {
+      res.status(200).send({
         success: true,
         message: "User Registration successfully",
       });
@@ -113,15 +113,15 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
     return next(
       new ErrorHander("you are not able to change the email, phone & Type", 400)
     );
-  const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
-    new: true,
+    const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
+      new: true,
     runValidators: true,
-    useFindAndModify: false,
-  });
-  res.status(200).json({
-    success: true,
-    message: "user Details Update successfully",
-  });
+      useFindAndModify: false,
+    });
+    res.status(200).json({
+      success: true,
+      message: "user Details Update successfully",
+    });
 });
 
 //this controller is run when we fill prevous password also
@@ -164,7 +164,7 @@ exports.changeUserPassword = catchAsyncError(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "passord Change sucessfully",
+      message: "password Change sucessfully",
     });
   }
   //isPasswordMatched);
@@ -209,7 +209,7 @@ exports.forgetPassword = catchAsyncError(async (req, res, next) => {
 
         res.status(200).json({
           success: true,
-          message: "passord Change sucessfully",
+          message: "Password Changed sucessfully",
         });
       }
     } else {
