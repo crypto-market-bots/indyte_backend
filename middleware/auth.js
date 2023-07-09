@@ -39,7 +39,6 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
       } else {
         //decodedData.userID);
         req.user = await User.findById(decodedData.userID);
-        
         if (!req.user) {
           return next(
             new ErrorHander("You are not a Valid User or seller", 400)

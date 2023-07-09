@@ -1,4 +1,6 @@
+const catchAsyncError = require('../middleware/catchAsyncError');
 const {Meal, UserMealRecommendation} = require('./model');
+const moment = require("moment")
 
 exports.allMealsFetch = catchAsyncError(async(req,res, next) => {
  try {
@@ -8,11 +10,13 @@ exports.allMealsFetch = catchAsyncError(async(req,res, next) => {
         data:meals,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'Failed to fetch meals' });
   }
 });
 
 exports.userMealRecommendation = catchAsyncError(async(req,res, next) => {  // Api for to add meal : dietition
+    console.log(req.body)
     try {
         var { user_id, meal_id, meal_time, meal_period} = req.body; // meal_time : DD-MM-YYYY
         if (!meal_id) {
@@ -42,6 +46,7 @@ exports.userMealRecommendation = catchAsyncError(async(req,res, next) => {  // A
         await userMealRecommendation.save();
         res.status(201).json({success: true,message: "Success"});
       } catch (error) {
+        console.log("err",error)
         res.status(500).json({ error: 'Failed to create user meal recommendation' });
       }
 });
@@ -76,7 +81,7 @@ exports.userMealRecommendationAdded = catchAsyncError(async(req,res, next) => {
         var user_meal_obj = await UserMealRecommendation.findById(meal_recom_id);
         user_meal_obj.user_picked = true;
         user_meal_obj.save()
-
+        res.status(201).json({success: true,message: "Success"});
     } catch (error) {
         res.status(500).json({ error: 'Something went wrong in the API' });
     }
