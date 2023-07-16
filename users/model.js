@@ -58,6 +58,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please Enter the Goal"],
   },
+  current_paidplan: {
+    type: mongoose.Schema.Types.Mixed,
+    default: { plan_id: 0, allowed_features: [], validity: 0 },
+  },
 
 },{timestamps:true});
 
