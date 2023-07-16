@@ -25,12 +25,9 @@ exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
 });
 
 exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
-  //"h");
-  console.log("isAuthenticated");
+  
   const bearerHeader = req.headers["authorization"];
-  //bearerHeader);
   if (typeof bearerHeader !== "undefined") {
-    //"hello2");
     const bearer = bearerHeader.split(" ");
     const token = bearer[1];
     jwt.verify(token, "DF983kjhfqn7@$@%*bjbfh12_", async (err, decodedData) => {
@@ -67,9 +64,6 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
 
 exports.authorizedRoles = (...roles) => {
   return (req, res, next) => {
-   
-      // console.log(roles);
-      console.log(req.user.type);
       if (!roles.includes(req.user.type)) {
         return next(
           new ErrorHander(

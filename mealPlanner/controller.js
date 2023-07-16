@@ -10,13 +10,12 @@ exports.allMealsFetch = catchAsyncError(async(req,res, next) => {
         data:meals,
     });
   } catch (error) {
-    console.log(error)
     res.status(500).json({ error: 'Failed to fetch meals' });
   }
 });
 
 exports.userMealRecommendation = catchAsyncError(async(req,res, next) => {  // Api for to add meal : dietition
-    console.log(req.body)
+
     try {
         var { user_id, meal_id, meal_time, meal_period} = req.body; // meal_time : DD-MM-YYYY
         if (!meal_id) {
@@ -46,7 +45,7 @@ exports.userMealRecommendation = catchAsyncError(async(req,res, next) => {  // A
         await userMealRecommendation.save();
         res.status(201).json({success: true,message: "Success"});
       } catch (error) {
-        console.log("err",error)
+    
         res.status(500).json({ error: 'Failed to create user meal recommendation' });
       }
 });

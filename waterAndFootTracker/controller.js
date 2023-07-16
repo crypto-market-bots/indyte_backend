@@ -25,7 +25,6 @@ exports.addWaterAndFootRecom = catchAsyncError(async (req, res, next) => {
         "You Assigned the today water and foot already to this user"
       )
     );
-    console.log(req.user.id )
 
   await WaterAndFootTracker.create({
     created_by: req.user.id,
@@ -38,25 +37,23 @@ exports.addWaterAndFootRecom = catchAsyncError(async (req, res, next) => {
       res.status(200).json({ success: true, message: "Assigned Successfully" });
     })
     .catch((err) => {
-      console.log(err)
       return next(new ErrorHander(err, 400));
     });
 });
 
 exports.updateWaterAndFootRecom = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  console.log(id )
   const waterAndFootTracker = await WaterAndFootTracker.find({
     _id: id,
     created_by: req.user._id,
   });
-  console.log(waterAndFootTracker)
+  
   if (!waterAndFootTracker)
     return next(new ErrorHander("Id doesn't exit with this user", 400));
   const { water_intake, foot_steps, user, schedule_time } = req.body;
   if (user) {
     const checkUser = await User.findById(user);
-    console.log(checkUser)
+    
     if (!checkUser) return next(new ErrorHander("User Doesn't Exit", 400));
   }
 
@@ -80,9 +77,7 @@ exports.updateWaterAndFootRecom = catchAsyncError(async (req, res, next) => {
 //for single day only
 exports.getWaterAndFoot = catchAsyncError(async (req, res, next) => {
   const { schedule_time } = req.body;
-  console.log(req.user.id, req.user._id)
   let scheduleTime = moment(schedule_time, "DD-MM-YYYY").toDate();
-  console.log(req.body,schedule_time)
   const WaterAndFoot = await WaterAndFootTracker.find({
     schedule_time: scheduleTime,
     $or: [

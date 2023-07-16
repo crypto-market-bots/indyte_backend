@@ -10,7 +10,7 @@ const jwt = require("jsonwebtoken");
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_TOKEN;
-console.log(accountSid,authToken)
+
 const client = require("twilio")("AC00611250c27880073ef08129ede99689", '95df8b7aa4c483d3eeab30a0a2ab7932');
 
 const crypto = require("crypto");
@@ -24,10 +24,10 @@ exports.sendOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander("Please enter the phone number for send the otp"));
   const phone = "+91"+ req.body.phone;
   // phone =+phone;
-  console.log(phone)
+
 
   const otp = Math.floor(100000 + Math.random() * 900000);
-  console.log("Otp is ",otp)
+  
   const ttl = 5 * 60 * 1000;
   const expires = Date.now() + ttl;
   const data = `${phone}.${otp}.${expires}`;
