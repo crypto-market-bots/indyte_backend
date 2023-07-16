@@ -1,8 +1,8 @@
 const ErrorHander = require("../utils/errorhander");
 const catchAsyncError = require("./catchAsyncError");
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
-const Seller = require("../models/sellerModel");
+const User = require("../users/model");
+// const Seller = require("../models/sellerModel");
 
 exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
   const email = req.body.email;
@@ -25,12 +25,9 @@ exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
 });
 
 exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
-  //"h");
-  console.log("isAuthenticated");
+  
   const bearerHeader = req.headers["authorization"];
-  //bearerHeader);
   if (typeof bearerHeader !== "undefined") {
-    //"hello2");
     const bearer = bearerHeader.split(" ");
     const token = bearer[1];
     jwt.verify(token, "DF983kjhfqn7@$@%*bjbfh12_", async (err, decodedData) => {
@@ -39,7 +36,6 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
       } else {
         //decodedData.userID);
         req.user = await User.findById(decodedData.userID);
-        
         if (!req.user) {
           return next(
             new ErrorHander("You are not a Valid User or seller", 400)
@@ -68,9 +64,6 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
 
 exports.authorizedRoles = (...roles) => {
   return (req, res, next) => {
-   
-      // console.log(roles);
-      console.log(req.user.type);
       if (!roles.includes(req.user.type)) {
         return next(
           new ErrorHander(

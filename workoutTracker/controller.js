@@ -1,4 +1,6 @@
+const catchAsyncError = require('../middleware/catchAsyncError');
 const {Exercise, Workout, WorkoutRecommendation} = require('./model');
+
 
 exports.exercise = catchAsyncError(async(req,res, next) => {  // post method for dietion and owner for to crate the excersise
     // Create Exercise Record

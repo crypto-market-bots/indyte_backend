@@ -74,5 +74,5 @@ const userMealRecommendationSchema = new mongoose.Schema({
 const UserMealRecommendation = mongoose.model('UserMealRecommendation', userMealRecommendationSchema);
 const Meal = mongoose.model('Meal', mealSchema);
 
-module.exports = Meal;
-module.exports = UserMealRecommendation;
+module.exports = {Meal, UserMealRecommendation};
+// module.exports = UserMealRecommendation;

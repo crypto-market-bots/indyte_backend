@@ -4,7 +4,7 @@ const User = require("../users/model");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
-const userOtpVerification = require("./userOtpVerfication");
+// const userOtpVerification = require("./userOtpVerfication");
 exports.registration = catchAsyncError(async (req, res, next) => {
   const {
     email,
@@ -21,8 +21,8 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   if (
     !email ||
     !phone ||
-    first_name ||
-    last_name ||
+    !first_name ||
+    !last_name ||
     !password ||
     !gender ||
     !dob ||
@@ -36,7 +36,7 @@ exports.registration = catchAsyncError(async (req, res, next) => {
     $or: [{ email: email }, { phone: phone }],
   });
   if (user) {
-    return next(new ErrorHander("User Already Exit", 400));
+    return next(new ErrorHander("User Already Exist", 400));
   }
   let trimmedpassword = password;
   trimmedpassword = trimmedpassword.trim();
@@ -53,8 +53,8 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
   const doc = await User.create(req.body)
-    .then((res) => {
-      res.status(201).json({
+    .then(() => {
+      res.status(200).send({
         success: true,
         message: "User Registration successfully",
       });
@@ -96,26 +96,32 @@ exports.login = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander("All fields are required", 400));
   }
 });
-
+ 
+exports.getUser= catchAsyncError(async(req,res,next)=>{
+const user = await User.findById(req.user.id);
+if(!user) return next(new ErrorHander("user does n't exit",400))
+res.status(200).json({success:true,user:user})
+}
+) 
 exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user)
     return next(
       new ErrorHander("Some error occured. User doesn't exits Try again", 400)
     );
-  if (req.body.email || req.body.phone || req.body.password)
+  if (req.body.email || req.body.phone || req.body.password || req.body.type)
     return next(
-      new ErrorHander("you are not able to change the email, phone &", 400)
+      new ErrorHander("you are not able to change the email, phone & Type", 400)
     );
-  const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
-    new: true,
+    const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
+      new: true,
     runValidators: true,
-    useFindAndModify: false,
-  });
-  res.status(200).json({
-    success: true,
-    message: "user Details Update successfully",
-  });
+      useFindAndModify: false,
+    });
+    res.status(200).json({
+      success: true,
+      message: "user Details Update successfully",
+    });
 });
 
 //this controller is run when we fill prevous password also
@@ -158,7 +164,7 @@ exports.changeUserPassword = catchAsyncError(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "passord Change sucessfully",
+      message: "password Change sucessfully",
     });
   }
   //isPasswordMatched);
@@ -203,7 +209,7 @@ exports.forgetPassword = catchAsyncError(async (req, res, next) => {
 
         res.status(200).json({
           success: true,
-          message: "passord Change sucessfully",
+          message: "Password Changed sucessfully",
         });
       }
     } else {

@@ -50,7 +50,6 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
     await uploadAndPushImage(left_image, "left_image");
     await uploadAndPushImage(right_image, "right_image");
 
-    console.log(globalObject);
   }
   processImages();
 

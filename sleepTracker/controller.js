@@ -1,6 +1,7 @@
 const SleepSchedule = require('./model');
 const moment = require('moment');
 const SleepScheduleLog = require('./model')
+const catchAsyncError = require("../middleware/catchAsyncError");
 
 // create sleepSchedule
 exports.sleepSchedule = catchAsyncError(async(req,res, next) => {
@@ -9,7 +10,6 @@ exports.sleepSchedule = catchAsyncError(async(req,res, next) => {
     const bed_time_formatted = moment(bedtime, 'HH:mm').toDate();
     const sleep_duration_formatted = moment(sleep_duration, 'HH:mm').toDate();
     const schedule_date_formatted =  moment(schedule_date, 'DD-MM-YYYY').toDate();
-
     const newSchedule = await SleepSchedule.create({
       bed_time_formatted,
       sleep_duration_formatted,
