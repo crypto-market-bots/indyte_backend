@@ -11,7 +11,7 @@ const jwt = require("jsonwebtoken");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_TOKEN;
 
-const client = require("twilio")("AC00611250c27880073ef08129ede99689", '95df8b7aa4c483d3eeab30a0a2ab7932');
+const client = require("twilio")(accountSid, authToken);
 
 const crypto = require("crypto");
 const { runInNewContext } = require("vm");
@@ -33,7 +33,7 @@ exports.sendOTP = catchAsyncError(async (req, res, next) => {
   const data = `${phone}.${otp}.${expires}`;
   const hash = crypto.createHmac("sha256", smsKey).update(data).digest("hex");
   const fullHash = `${hash}.${expires}`;
-
+  console.log("hash",twilioNum,phone)
   client.messages
     .create({
       body: `Your One Time Login Password For Indyte is ${otp} . Valid only for 2 minutes`,
