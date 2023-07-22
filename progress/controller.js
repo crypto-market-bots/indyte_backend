@@ -3,7 +3,8 @@ const Progress = require("./model");
 const User = require("../users/model");
 const AWS = require("aws-sdk");
 const ErrorHander = require("../utils/errorhander");
-
+const moment = require('moment')
+const fs = require('fs'); 
 //s3 bucket crediantls
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
@@ -13,6 +14,7 @@ const s3 = new AWS.S3({
 exports.newProgress = catchAsyncError(async (req, res, next) => {
   //firstly check the user is exist or not
   const user = await User.findById(req.user.id);
+  const { physical_measurement, images, progress_month_year } = req.body;
   if (!user)
     return next(new ErrorHander("User Doesn't exit in our database", 400));
 
@@ -23,17 +25,23 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
   async function uploadAndPushImage(image, imageName) {
     if (image) {
       try {
+        const imageData = fs.readFileSync(image.tempFilePath);
+
+        // console.log(image.data.buffer)
         const uploadParams = {
           Bucket: "indyte-static-images",
-          key: `${progress_month_year}/${user._id}-${imageName}`,
-          Body: Buffer.from(image.data),
-          contentType: image.mimetype,
+          Key: `${progress_month_year}/${user._id}-${imageName}/${user._id}`,
+          Body: imageData,
+        
           ACL: "public-read",
+          ContentType: 'image/jpeg',
+        
         };
         s3.upload(uploadParams, function (err, data) {
           if (err) {
             return next(new ErrorHander(err, 400));
           } else {
+            // console.log(data)
             globalObject[imageName] = data.Location;
           }
         });
@@ -53,7 +61,7 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
   }
   processImages();
 
-  const { physical_measurement, images, progress_month_year } = req.body;
+
   const formattedDate = moment(progress_month_year, "MM-YYYY").format(
     "MM-YYYY"
   );
@@ -72,7 +80,7 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
         .json({ success: true, message: "Progress created successfully" });
     })
     .catch((err) => {
-      return next(new ErrorHander(err, 4000));
+      return next(new ErrorHander(err, 400));
     });
 });
 
