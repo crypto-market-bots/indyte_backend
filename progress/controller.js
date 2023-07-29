@@ -1,6 +1,8 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const Progress = require("./model");
 const User = require("../users/model");
+const moment = require("moment");
+const path = require('path')
 const AWS = require("aws-sdk");
 const ErrorHander = require("../utils/errorhander");
 const moment = require('moment')
@@ -37,8 +39,10 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
           ContentType: 'image/jpeg',
         
         };
+  
         s3.upload(uploadParams, function (err, data) {
           if (err) {
+
             return next(new ErrorHander(err, 400));
           } else {
             // console.log(data)
@@ -46,7 +50,8 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
           }
         });
       } catch (error) {
-        console.error(`Failed to upload image ${imageName}: ${error.message}`);
+        return next(new ErrorHander(`Failed to upload image ${imageName}: ${error.message}`,400))
+        
       }
     }
     return;
@@ -68,13 +73,13 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
   //here we traverse the Images and live the images on s3 bucket
 
   //Now we make the new Progress
-  await Progress.create({
+  const progress = await Progress.create({
     images: globalObject,
     progress_month_year: formattedDate,
     physical_measurement: physical_measurement,
     created_by: user._id,
   })
-    .then((res) => {
+    .then(() => {
       res
         .status(201)
         .json({ success: true, message: "Progress created successfully" });
@@ -87,11 +92,11 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
 //currently i implement the api for all not for single
 exports.allProgress = catchAsyncError(async (req, res, next) => {
   //Here we Implement the pagination for fast the Api
-  const Progress = await Progress.find({ created_by: req.user.id })
+  const progress = await Progress.find({ created_by: req.user.id })
     .sort({ progress_month_year: -1 })
     .exec();
 
-  res.status(200).json({ success: true, data: Progress });
+  res.status(200).json({ success: true, data: progress });
 });
 
 exports.updateProgress = catchAsyncError(async (req, res, next) => {
@@ -101,13 +106,13 @@ exports.updateProgress = catchAsyncError(async (req, res, next) => {
 
   //NOW check this Progress on the basis of the user
   const { id } = req.params;
-  const progress = await Progress.find({ _id: id, created_by: user._id });
+  const progress = await Progress.findOne({ _id: id, created_by: user._id });
   if (!progress)
     return next(
       new ErrorHander("Progress of this id doesn't exit in the user")
     );
 
-  const { progress_month_year } = req.body;
+  const { progress_month_year,physical_measurement } = req.body;
   if (progress_month_year)
     return next(
       new ErrorHander("Your are not able to update the month and year", 400)
@@ -151,11 +156,14 @@ exports.updateProgress = catchAsyncError(async (req, res, next) => {
   await uploadAndPushImage(right_image, "right_image");
 
   progress.images = globalObject;
+  if (!progress.physical_measurement) {
+    progress.physical_measurement = {}; // Initialize as an empty object
+  }
 
   for (let key in physical_measurement) {
     if (physical_measurement.hasOwnProperty(key)) {
       const value = physical_measurement[key];
-      progress.physical_measurement.key = value;
+      progress.physical_measurement[key] = value;
     }
   }
   await progress.save();

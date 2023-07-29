@@ -1,5 +1,6 @@
+const moment = require('moment');
 const catchAsyncError = require('../middleware/catchAsyncError');
-const {Exercise, Workout, WorkoutRecommendation} = require('./model');
+const {Exercise, Workout, workoutRecommendation} = require('./model');
 
 
 exports.exercise = catchAsyncError(async(req,res, next) => {  // post method for dietion and owner for to crate the excersise
@@ -29,52 +30,53 @@ exports.exercise = catchAsyncError(async(req,res, next) => {  // post method for
     }    
 });
 
-exports.workout = catchAsyncError(async(req,res, next) => {  
+exports.workout = catchAsyncError(async (req, res, next) => {
     try {
-        const { name, difficulty, physical_equipments, sets } = req.body;
+        let { name, difficulty, physical_equipments, sets } = req.body;
 
         // Create an array to store the exercises
         const exercises = [];
-
+        sets = JSON.parse(sets)
         // Loop through each set in the sets object
         for (const setNumber in sets) {
-        if (Object.hasOwnProperty.call(sets, setNumber)) {
-            const set = sets[setNumber];
-
-            // Loop through each exercise in the set
-            for (const exerciseNumber in set) {
-            if (Object.hasOwnProperty.call(set, exerciseNumber)) {
-                const exerciseId = set[exerciseNumber];
-
-                // Retrieve the exercise from the database using the provided exerciseId
-                var exercise = await Exercise.findById(exerciseId);
-                
-                // Add the exercise to the exercises array
-                if (exercise) {
-                    exercise.set_number = setNumber;
-                    await exercise.save()
-                    exercises.push(exercise);
+            if (Object.hasOwnProperty.call(sets, setNumber)) {
+                const set = sets[setNumber];
+                // Loop through each exercise in the set
+                for (const exerciseNumber in set) {
+                    if (Object.hasOwnProperty.call(set, exerciseNumber)) {
+                        const exerciseId = set[exerciseNumber];
+                        // Retrieve the exercise from the database using the provided exerciseId
+                        var exercise = await Exercise.findById(exerciseId);
+                        // Add the exercise to the exercises array
+                        if (exercise) {
+                            exercise.set_number = setNumber;
+                            await exercise.save()
+                            exercises.push(exercise);
+                        }
+                        else {
+                            res.status(500).json({ message: 'sets ids are invalid' });
+                        }
+                    }
                 }
             }
-            }
-        }
         }
 
         // Create a new workout
         const workout = new Workout({
-        name,
-        difficulty,
-        physical_equipments,
-        exercises,
+            name,
+            difficulty,
+            physical_equipments,
+            exercises,
+            created_by: req.user.id
         });
 
         // Save the workout to the database
         await workout.save();
         res.status(201).json(workout);
-  } catch (error) {
+    } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred' });
-  }
+    }
 });
 
 exports.workoutUpdate = catchAsyncError(async(req,res, next) => {  
@@ -129,46 +131,42 @@ exports.workoutUpdate = catchAsyncError(async(req,res, next) => {
 });
 
 exports.workoutRecommendation = catchAsyncError(async(req,res, next) => {  
+    const { user_id, workout_id, difficulty, schedule_time } = req.body;
+    let schedule_time_formatted = moment(schedule_time, 'HH:mm DD-MM-YYYY').toDate();
     try {
-        const { user_id, workout_id, difficulty, schedule_time } = req.body;
-
-        schedule_time_formatted = moment(schedule_time, 'HH:mm DD-MM-YYYY').toDate();
         // Create a new workout recommendation object
-        const recommendation = new WorkoutRecommendation({
-            user_id,
-            workout_id,
+        const recommendation = new workoutRecommendation({
+            user: user_id,
+            workout: workout_id,
             difficulty,
-            schedule_time_formatted,
-            created_by
+            schedule_time: schedule_time_formatted,
+            created_by:req.user.id
         });
 
         // Save the workout recommendation to the database
-        const savedRecommendation = await recommendation.save();
-
-        res.status(201).json({ success: true, message: "Success",});
+        await recommendation.save();
+        res.status(201).send({ success: true, message: "Success",});
     } catch (error) {
-        res.status(500).json({ error: 'Failed to create workout recommendation' });
+        res.status(500).send({ error: 'Failed to create workout recommendation' });
     }
 });
 
 
 exports.workoutCompleted = catchAsyncError(async(req,res, next) => {   // api for customer
     try {
-        const { is_completed, workout_recom_id } = req.params;
+        const { is_completed, workout_recom_id } = req.body;
 
         const currentDate = moment().startOf('day'); // Get the current date with time set to 00:00:00
 
-        var workout_recom = await WorkoutRecommendation.findOne({
+        var workout_recom = await workoutRecommendation.findOne({
         $and: [
             { _id: workout_recom_id },
             { schedule_time: { $gte: currentDate.toDate(), $lt: currentDate.clone().endOf('day').toDate() } }
             ]
         })
 
-        workout_recom.is_completed=is_completed;
+        workout_recom.is_completed = is_completed;
         await workout_recom.save();
-
-
         res.status(201).json({ success: true, message: "Success",});
     } catch (error) {
         res.status(500).json({ error: 'Failed to perform the action' });
@@ -177,7 +175,7 @@ exports.workoutCompleted = catchAsyncError(async(req,res, next) => {   // api fo
 
 
 exports.fetchExercise = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
-    const exercise_id = req.params.exercise_id;
+    const {exercise_id} = req.query
     if (exercise_id) {
       Exercise.findById(exercise_id)
         .then((exercise) => {
@@ -202,7 +200,7 @@ exports.fetchExercise = catchAsyncError(async(req,res, next) => {   // api for c
 
 
 exports.fetchWorkout = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
-    const workout_id = req.params.workout_id;
+    const workout_id = req.query.workout_id;
 
     if (workout_id) {
       Workout.findById(workout_id)
@@ -227,14 +225,14 @@ exports.fetchWorkout = catchAsyncError(async(req,res, next) => {   // api for cu
 });
 
 exports.fetchWorkoutRecommendations = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
-    const workout_recom_date = req.params.workout_recom_date;
-    const workout_recom_date_formatted =  moment(workout_recom_date, 'DD-MM-YYYY').toDate();
+    const workout_recom_date = req.params.date;
+    const workout_recom_date_formatted =  moment(workout_recom_date, 'DD-MM-YYYY');
 
     if (!workout_recom_date_formatted){
         res.status(500).json({ error: 'workout_recom_date not found.' });
     }
 
-    WorkoutRecommendation.find({ $and: [
+    workoutRecommendation.find({ $and: [
             { user : req.user.id },
             { schedule_time: { $gte: workout_recom_date_formatted.toDate(), $lt: workout_recom_date_formatted.clone().endOf('day').toDate() } }
             ]})
