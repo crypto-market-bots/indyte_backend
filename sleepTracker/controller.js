@@ -1,6 +1,6 @@
-const SleepSchedule = require('./model');
+const {SleepSchedule} = require('./model');
 const moment = require('moment');
-const SleepScheduleLog = require('./model')
+const {SleepScheduleLog} = require('./model')
 const catchAsyncError = require("../middleware/catchAsyncError");
 
 // create sleepSchedule
@@ -11,9 +11,9 @@ exports.sleepSchedule = catchAsyncError(async(req,res, next) => {
     const sleep_duration_formatted = moment(sleep_duration, 'HH:mm').toDate();
     const schedule_date_formatted =  moment(schedule_date, 'DD-MM-YYYY').toDate();
     const newSchedule = await SleepSchedule.create({
-      bed_time_formatted,
-      sleep_duration_formatted,
-      schedule_date_formatted,
+      bedtime: bed_time_formatted,
+      sleep_duration: sleep_duration_formatted,
+      schedule_date: schedule_date_formatted,
       repeat_from,
       repeat_to,
       created_by : req.user.id,
@@ -38,7 +38,7 @@ exports.sleepScheduleFetch = catchAsyncError(async(req,res, next) => {
         const { schedule_date } = req.query;
     
         const formattedDate = moment(schedule_date, 'DD-MM-YYYY').toDate();
-        const week_day = formattedDate.isoWeek();
+        const week_day = moment(schedule_date, 'DD-MM-YYYY').isoWeek();
     
         const schedules = await SleepSchedule.find({
             $or: [

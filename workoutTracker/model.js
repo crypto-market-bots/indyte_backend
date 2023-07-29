@@ -112,11 +112,10 @@ const workoutRecommendationSchema = new mongoose.Schema({
 
 
 // -> workout/ api -> excersise- > set_1, {set: {"1" : [execrise1,exe], "2", : [excersie2] }
-module.exports = mongoose.model('WorkOutRecommendation', workoutRecommendationSchema);
-
-module.exports = mongoose.model('WorkOut', workoutSchema);
-
-module.exports = mongoose.model('Exercise', exerciseSchema);
+const workoutRecommendation = mongoose.model('WorkOutRecommendation', workoutRecommendationSchema);
+const Workout = mongoose.model('WorkOut', workoutSchema);
+const Exercise = mongoose.model('Exercise', exerciseSchema);
+module.exports  = {Exercise, Workout,workoutRecommendation}
 
 
 

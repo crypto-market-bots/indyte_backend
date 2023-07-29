@@ -4,6 +4,6 @@ const { newProgress, allProgress, updateProgress } = require("../progress/contro
 const router = express.Router();
 router.route("/new-progress").post(isAuthenticated,newProgress);
 router.route("/get-progress").get(isAuthenticated,allProgress);
-router.route("/update-progress").put(isAuthenticated,updateProgress);
+router.route("/update-progress/:id").put(isAuthenticated,updateProgress);
 
 module.exports = router;
