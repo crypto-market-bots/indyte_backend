@@ -1,4 +1,5 @@
 const catchAsyncError = require('../middleware/catchAsyncError');
+const ErrorHander = require('../utils/errorhander');
 const {Meal, UserMealRecommendation} = require('./model');
 const moment = require("moment")
 
@@ -14,13 +15,34 @@ exports.allMealsFetch = catchAsyncError(async(req,res, next) => {
   }
 });
 
+exports.fetchMealById= catchAsyncError(async(req,res, next) => {
+ try {
+    const {id} = req.params
+    const meals = await Meal.findById(id);
+    res.status(201).json({
+        success: true,
+        data:meals,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch meals' });
+  }
+});
+
 exports.userMealRecommendation = catchAsyncError(async(req,res, next) => {  // Api for to add meal : dietition
 
     try {
         var { user_id, meal_id, meal_time, meal_period} = req.body; // meal_time : DD-MM-YYYY
+        
+        
+        
+        
+        
+        
+        
         if (!meal_id) {
             const { meal_name, nutritions, description, image_link, required_ingredients, steps} = req.body;
             const meal = new Meal({
+                meal_image: image,
                 name:meal_name,
                 nutritions:nutritions,
                 description:description,

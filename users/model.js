@@ -19,6 +19,9 @@ const userSchema = new mongoose.Schema({
     unique: true,
     validate: [validator.isEmail, "Please Enter the valid email"],
   },
+  image: {
+    type: String,
+  },
   phone: {
     type: Number,
     required: [true, "Please Enter your Phone Number"],

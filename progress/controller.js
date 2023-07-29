@@ -5,7 +5,6 @@ const moment = require("moment");
 const path = require('path')
 const AWS = require("aws-sdk");
 const ErrorHander = require("../utils/errorhander");
-const moment = require('moment')
 const fs = require('fs'); 
 //s3 bucket crediantls
 const s3 = new AWS.S3({

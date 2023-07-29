@@ -4,6 +4,16 @@ const User = require("../users/model");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
+const AWS = require("aws-sdk");
+const fs = require('fs'); 
+//s3 bucket crediantls
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
+});
+
+
+
 // const userOtpVerification = require("./userOtpVerfication");
 exports.registration = catchAsyncError(async (req, res, next) => {
   const {
@@ -18,6 +28,8 @@ exports.registration = catchAsyncError(async (req, res, next) => {
     height,
     goal,
   } = req.body;
+  const {profile_image} = req.files
+
   if (
     !email ||
     !phone ||
@@ -52,6 +64,52 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   const hashPassword = await bcrypt.hash(trimmedpassword, salt);
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
+
+  function getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  async function uploadAndPushImage(image, imageName) {
+    if (image) {
+      try {
+
+        // Generate a random number using Math.random()
+        const randomNumber = getRandomNumber(100000, 999999);
+        // Construct the imageName using the profilepic-email-randomnumber format
+        const key = `${imageName}-${email}-${randomNumber}`;
+        
+        const imageData = fs.readFileSync(image.tempFilePath);
+
+        const uploadParams = {
+          Bucket: "indyte-static-images",
+          Key: key,
+          Body: imageData,
+          ACL: "public-read",
+          ContentType: 'image/jpeg',
+        };
+  
+        // Wrap the s3.upload function in a Promise
+        const uploadPromise = new Promise((resolve, reject) => {
+          s3.upload(uploadParams, function (err, data) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(data);
+            }
+          });
+        });
+  
+        // Wait for the upload to complete and get the data from the Promise
+        const uploadedData = await uploadPromise;
+        req.body.image = uploadedData.Location;
+      } catch (error) {
+        return next(new ErrorHander(`Failed to upload image ${imageName}: ${error.message}`, 400));
+      }
+    }
+    return;
+  }
+  
+  await uploadAndPushImage(profile_image, "profile_image");
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
