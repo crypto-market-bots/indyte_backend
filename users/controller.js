@@ -138,11 +138,11 @@ exports.login = catchAsyncError(async (req, res, next) => {
           { expiresIn: "5d" }
         );
 
-        
         res.status(200).json({
           success: true,
           message: "Login Successful",
           token: token,
+          user_type : user.type
         });
       } else {
         return next(new ErrorHander("Email or password is not valid", 400));
