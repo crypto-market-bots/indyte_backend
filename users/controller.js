@@ -123,14 +123,14 @@ exports.registration = catchAsyncError(async (req, res, next) => {
 });
 
 exports.login = catchAsyncError(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, user_type } = req.body;
   if (email && password) {
-    ////"hello");
+    
     const user = await User.findOne({ email }).select("+password");
     if (user) {
-      //  //user);
+      
       const isMatch = await bcrypt.compare(password, user.password);
-      if (user.email == email && isMatch) {
+      if ((user.email == email && isMatch) && (!(user_type) || user_type == user.type)) {
         // Generate JWT Token
         const token = jwt.sign(
           { userID: user._id },
@@ -138,7 +138,7 @@ exports.login = catchAsyncError(async (req, res, next) => {
           { expiresIn: "5d" }
         );
 
-        //res.send({"status": "success","message":"LOGIN sucessful","token": token})
+        
         res.status(200).json({
           success: true,
           message: "Login Successful",
