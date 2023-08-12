@@ -61,6 +61,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please Enter the Goal"],
   },
+  profile_image_key:{
+    type:String,
+   
+  }
 
 },{timestamps:true});
 

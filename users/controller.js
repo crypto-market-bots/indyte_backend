@@ -5,14 +5,58 @@ const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const AWS = require("aws-sdk");
-const fs = require('fs'); 
+const fs = require("fs");
+AWS.config.logger = console;
 //s3 bucket crediantls
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
 });
+function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+async function uploadAndPushImage(image, imageName, email) {
+  if (image) {
+    try {
+      // Generate a random number using Math.random()
+      const randomNumber = getRandomNumber(100000, 999999);
+      // Construct the imageName using the profilepic-email-randomnumber format
+      const key = `${imageName}-${email}-${randomNumber}`;
 
+      const imageData = fs.readFileSync(image.tempFilePath);
 
+      const uploadParams = {
+        Bucket: "indyte-static-images",
+        Key: key,
+        Body: imageData,
+        ACL: "public-read",
+        ContentType: "image/jpeg",
+      };
+
+      // Wrap the s3.upload function in a Promise
+      const uploadPromise = new Promise((resolve, reject) => {
+        s3.upload(uploadParams, function (err, data) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        });
+      });
+
+      // Wait for the upload to complete and get the data from the Promise
+      const uploadedData = await uploadPromise;
+      const data = {
+        key: key,
+        location: uploadedData.Location,
+      };
+      return data;
+    } catch (error) {
+      return `Failed to upload image ${imageName}: ${error.message}`;
+    }
+  }
+  return;
+}
 
 // const userOtpVerification = require("./userOtpVerfication");
 exports.registration = catchAsyncError(async (req, res, next) => {
@@ -28,7 +72,7 @@ exports.registration = catchAsyncError(async (req, res, next) => {
     height,
     goal,
   } = req.body;
-  const {profile_image} = req.files
+  const { profile_image } = req.files;
 
   if (
     !email ||
@@ -65,51 +109,10 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
 
-  function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  async function uploadAndPushImage(image, imageName) {
-    if (image) {
-      try {
-
-        // Generate a random number using Math.random()
-        const randomNumber = getRandomNumber(100000, 999999);
-        // Construct the imageName using the profilepic-email-randomnumber format
-        const key = `${imageName}-${email}-${randomNumber}`;
-        
-        const imageData = fs.readFileSync(image.tempFilePath);
-
-        const uploadParams = {
-          Bucket: "indyte-static-images",
-          Key: key,
-          Body: imageData,
-          ACL: "public-read",
-          ContentType: 'image/jpeg',
-        };
-  
-        // Wrap the s3.upload function in a Promise
-        const uploadPromise = new Promise((resolve, reject) => {
-          s3.upload(uploadParams, function (err, data) {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(data);
-            }
-          });
-        });
-  
-        // Wait for the upload to complete and get the data from the Promise
-        const uploadedData = await uploadPromise;
-        req.body.image = uploadedData.Location;
-      } catch (error) {
-        return next(new ErrorHander(`Failed to upload image ${imageName}: ${error.message}`, 400));
-      }
-    }
-    return;
-  }
-  
-  await uploadAndPushImage(profile_image, "profile_image");
+  const data = await uploadAndPushImage(profile_image, "profile_image", email);
+  if (!data.location) return next(new ErrorHander(data));
+  req.body.image = data.location;
+  req.body.profile_image_key = key;
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -154,33 +157,78 @@ exports.login = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander("All fields are required", 400));
   }
 });
- 
-exports.getUser= catchAsyncError(async(req,res,next)=>{
-const user = await User.findById(req.user.id);
-if(!user) return next(new ErrorHander("user does n't exit",400))
-res.status(200).json({success:true,user:user})
-}
-) 
+
+exports.getUser = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return next(new ErrorHander("user does n't exit", 400));
+  res.status(200).json({ success: true, user: user });
+});
 exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user)
     return next(
-      new ErrorHander("Some error occured. User doesn't exits Try again", 400)
+      new ErrorHander("Some error occurred. User doesn't exist. Try again", 400)
     );
   if (req.body.email || req.body.phone || req.body.password || req.body.type)
     return next(
-      new ErrorHander("you are not able to change the email, phone & Type", 400)
+      new ErrorHander("You are not able to change the email, phone & Type", 400)
     );
-    const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
-      new: true,
+
+  if (req.files && req.files.profile_image) {
+    try {
+      const data = await uploadAndPushImage(
+        req.files.profile_image,
+        "profile_image",
+        user.email
+      );
+      console.log(data);
+      if (!data.location) return next(new ErrorHander(data));
+
+      // Delete the user's previous image
+      
+
+      req.body.image = data.location;
+      req.body.profile_image_key = data.key;
+    } catch (error) {
+      return next(new ErrorHander(error));
+    }
+  }
+
+  if (req.body.image === "") {
+    req.body.profile_image_key = "";
+  }
+
+  const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
+    new: true,
     runValidators: true,
-      useFindAndModify: false,
-    });
-    res.status(200).json({
-      success: true,
-      message: "user Details Update successfully",
-    });
+    useFindAndModify: false,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "User details updated successfully",
+  });
 });
+
+// Function to delete an S3 object and return a promise
+function deleteS3Object(key) {
+  console.log(key)
+  return new Promise((resolve, reject) => {
+    const params =  {
+      Bucket:"indyte-static-images",
+      Key:key
+    }
+    s3.deleteObject(params,
+      (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      }
+    );
+  });
+}
 
 //this controller is run when we fill prevous password also
 exports.changeUserPassword = catchAsyncError(async (req, res, next) => {
