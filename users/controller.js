@@ -341,25 +341,43 @@ exports.getUser = catchAsyncError(async (req, res, next) => {
   res.status(200).json({ success: true, user: user });
 });
 
+
+
 exports.fetchUser = catchAsyncError(async (req, res, next) => {
   const type = req.query.type;
+  const mode = req.user.type;
+  console.log(mode)
   try {
     if (!type || (type != "dietitian" && type != "user")) {
       res.status(500).json({ success: false, message: "invalid Type" });
     }
     else{
-      if (type == "dietitian") {
+      if (type == "dietitian" && mode == "admin") {
         const data = await dietitian.find();
         res.status(201).json({
           success: true,
           data: data,
         });
-      } else {
+      } else if (type == "user" && mode == "admin") {
         const data = await User.find();
         res.status(201).json({
           success: true,
           data: data,
         });
+      } else if (type == "user" && mode == "dietitian") {
+        const data = await User.find();
+        res.status(201).json({
+          success: true,
+          data: data,
+        });
+      }
+      else{
+        res
+          .status(400)
+          .json({
+            success: false,
+            message: "Can not acess dietitian as dietitian",
+          });
       }
     }
   } catch (error) {

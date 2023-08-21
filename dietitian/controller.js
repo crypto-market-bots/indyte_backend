@@ -1,7 +1,6 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
-const { User } = require("../users/model");
-
+const User  = require("../users/model");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
@@ -11,12 +10,11 @@ AWS.config.logger = console;
 
 
 exports.assignDietitian = catchAsyncError(async (req, res, next) => {
-    exports.UserRegistration = catchAsyncError(async (req, res, next) => {
+  console.log("the assign dietitian is also ")
       const {
         user_id,
         dietitian_id,
       } = req.body;
-      const { profile_image } = req.files;
 
       if (
         !user_id ||
@@ -24,19 +22,20 @@ exports.assignDietitian = catchAsyncError(async (req, res, next) => {
       ) {
         return next(new ErrorHander("All fields are required", 400));
       }
-      const user = await User.findOne({
-        $or: [{ _id: user_id }],
-      });
+      const user = await User.findOneAndUpdate(
+        { _id: user_id }, // Filter for finding the user
+        { $set: { dietitian: dietitian_id } }, // Update the "dietitian" parameter
+        { new: true } // Return the updated document
+      );
       if (user) {
         console.log(user)
         res.status(200).send({
           success: true,
-          message: "User Registration successfully",
+          message: "Updated Scuessfully",
+          user:user
         });
       }
-
-    });
 });
 
 
-exports.assignDietitian = catchAsyncError(async (req, res, next) => {});
+// exports.assignDietitian = catchAsyncError(async (req, res, next) => {});

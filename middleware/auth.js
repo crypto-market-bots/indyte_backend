@@ -1,7 +1,8 @@
 const ErrorHander = require("../utils/errorhander");
 const catchAsyncError = require("./catchAsyncError");
 const jwt = require("jsonwebtoken");
-const { User, dietitian } = require("../users/model");
+const dietitian = require("../dietitian/model");
+const User = require("../users/model");
 // const Seller = require("../models/sellerModel");
 
 exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
@@ -70,6 +71,7 @@ exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
 });
 
 exports.authorizedRoles = (...roles) => {
+  console.log("authorized also called")
   return (req, res, next) => {
       if (!roles.includes(req.user.type)) {
         return next(
