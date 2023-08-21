@@ -1,5 +1,6 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
+const  dietitian = require("../dietitian/model");
 const User = require("../users/model");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
@@ -15,6 +16,7 @@ const s3 = new AWS.S3({
 function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
 async function uploadAndPushImage(image, imageName, email) {
   if (image) {
     try {
@@ -26,7 +28,7 @@ async function uploadAndPushImage(image, imageName, email) {
       const imageData = fs.readFileSync(image.tempFilePath);
 
       const uploadParams = {
-        Bucket: "indyte-static-images",
+        Bucket: "indyte-static-images/profile",
         Key: key,
         Body: imageData,
         ACL: "public-read",
@@ -58,8 +60,135 @@ async function uploadAndPushImage(image, imageName, email) {
   return;
 }
 
+exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
+ const {
+   email,
+   phone,
+   first_name,
+   last_name,
+   password,
+   gender,
+   dob,
+   weight,
+   height,
+   qualification,
+   goal,
+   family_contact_number,
+   local_guardian_address,
+   local_address,
+   permanent_address,
+   id_card_number,
+   id_card_type,
+   photo_id,
+   study_details,
+   photo,
+   experience,
+   past_work_details,
+ } = req.body;
+
+  console.log(req.body)
+
+  // const { profile_image } = req.files;
+
+ if (
+   !email ||
+   !phone ||
+   !first_name ||
+   !last_name ||
+   !password ||
+   !gender ||
+   !dob ||
+   !weight ||
+   !height ||
+   !qualification ||
+   !goal ||
+   !family_contact_number ||
+   !local_guardian_address ||
+   !local_address ||
+   !id_card_number ||
+   !id_card_type ||
+   !photo_id ||
+   !study_details ||
+   !permanent_address ||
+   !photo ||
+   !experience ||
+   !past_work_details
+ ) {
+   return next(new ErrorHander("All fields are required", 400));
+ }
+
+  try {
+    const existingDietitian = await dietitian.findOne({
+      $or: [{ email: email }, { phone: phone }],
+    });
+
+    if (existingDietitian) {
+      return next(new ErrorHander("Dietitian Already Exists", 400));
+    }
+
+    const trimmedPassword = password.trim();
+    if (trimmedPassword.length < 6) {
+      return next(
+        new ErrorHander(
+          "Password should be greater than or equal to 6 characters",
+          400
+        )
+      );
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(trimmedPassword, salt);
+
+    // const data = await uploadAndPushImage(
+    //   profile_image,
+    //   "profile_image",
+    //   email
+    // );
+
+    // if (!data.location) {
+    //   return next(new ErrorHander(data));
+    // }
+
+    const newDietitian = new dietitian({
+      email,
+      phone,
+      first_name,
+      last_name,
+      password: hashPassword,
+      gender,
+      dob: new Date(dob),
+      weight,
+      height,
+      qualification,
+      goal,
+      family_contact_number,
+      local_address,
+      local_guardian_address,
+      permanent_address,
+      id_card_number,
+      id_card_type,
+      photo_id,
+      study_details,
+      photo,
+      experience,
+      past_work_details,
+      // image: data.location,
+      // profile_image_key: data.key,
+    });
+
+    await newDietitian.save();
+
+    res.status(200).send({
+      success: true,
+      message: "Dietitian Registration successfully",
+    });
+  } catch (error) {
+    return next(new ErrorHander(error.message, 400));
+  }
+});
+
 // const userOtpVerification = require("./userOtpVerfication");
-exports.registration = catchAsyncError(async (req, res, next) => {
+exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   const {
     email,
     phone,
@@ -112,7 +241,7 @@ exports.registration = catchAsyncError(async (req, res, next) => {
   const data = await uploadAndPushImage(profile_image, "profile_image", email);
   if (!data.location) return next(new ErrorHander(data));
   req.body.image = data.location;
-  req.body.profile_image_key = key;
+  req.body.profile_image_key = data.key;
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -125,44 +254,122 @@ exports.registration = catchAsyncError(async (req, res, next) => {
     });
 });
 
-exports.login = catchAsyncError(async (req, res, next) => {
-  const { email, password } = req.body;
-  if (email && password) {
-    ////"hello");
-    const user = await User.findOne({ email }).select("+password");
-    if (user) {
-      //  //user);
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (user.email == email && isMatch) {
-        // Generate JWT Token
-        const token = jwt.sign(
-          { userID: user._id },
-          process.env.JWT_SECRET_KEY,
-          { expiresIn: "5d" }
-        );
+// exports.loginUser = catchAsyncError(async (req, res, next) => {
+//   const { email, password } = req.body;
+//   if (email && password) {
+//     ////"hello");
 
-        //res.send({"status": "success","message":"LOGIN sucessful","token": token})
-        res.status(200).json({
-          success: true,
-          message: "Login Successful",
-          token: token,
-        });
+    
+//     if (user) {
+//       //  //user);
+//       const isMatch = await bcrypt.compare(password, user.password);
+//       if (user.email == email && isMatch) {
+//         // Generate JWT Token
+//         const token = jwt.sign(
+//           { userID: user._id },
+//           process.env.JWT_SECRET_KEY,
+//           { expiresIn: "5d" }
+//         );
+
+//         //res.send({"status": "success","message":"LOGIN sucessful","token": token})
+//         res.status(200).json({
+//           success: true,
+//           message: "Login Successful",
+//           token: token,
+//         });
+//       } else {
+//         return next(new ErrorHander("Email or password is not valid", 400));
+//       }
+//     } else {
+//       return next(new ErrorHander("Email or password is not valid", 400));
+//     }
+//   } else {
+//     return next(new ErrorHander("All fields are required", 400));
+//   }
+// });
+
+exports.login =catchAsyncError(async (req, res, next) => {
+    const { email, password,type } = req.body;
+    let user;
+    if (email && password ) {
+      if(!type){
+        user = await User.findOne({ email:email }).select("+password");
+      }
+      else{
+        if(type=="web"){
+          user = await dietitian.findOne({ email: email }).select("+password");
+        }
+        else{
+          return next(new ErrorHander("Invalid Type  ", 400));
+        }
+      }
+
+      if (user) {
+        console.log(user)
+        //  //user);
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (user.email == email && isMatch) {
+          // Generate JWT Token
+          const token = jwt.sign(
+            { userID: user._id },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "5d" }
+          );
+
+          //res.send({"status": "success","message":"LOGIN sucessful","token": token})
+          res.status(200).json({
+            success: true,
+            message: "Login Successful",
+            token: token,
+            data:user
+          });
+        } else {
+          return next(new ErrorHander("Email or password is not valid", 400));
+        }
       } else {
         return next(new ErrorHander("Email or password is not valid", 400));
       }
     } else {
-      return next(new ErrorHander("Email or password is not valid", 400));
+      return next(new ErrorHander("All fields are required", 400));
     }
-  } else {
-    return next(new ErrorHander("All fields are required", 400));
-  }
-});
+  });
+
 
 exports.getUser = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user) return next(new ErrorHander("user does n't exit", 400));
   res.status(200).json({ success: true, user: user });
 });
+
+exports.fetchUser = catchAsyncError(async (req, res, next) => {
+  const type = req.query.type;
+  try {
+    if (!type || (type != "dietitian" && type != "user")) {
+      res.status(500).json({ success: false, message: "invalid Type" });
+    }
+    else{
+      if (type == "dietitian") {
+        const data = await dietitian.find();
+        res.status(201).json({
+          success: true,
+          data: data,
+        });
+      } else {
+        const data = await User.find();
+        res.status(201).json({
+          success: true,
+          data: data,
+        });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: "failed to fetch user" });
+  }
+  
+});
+
+
+
 exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user)

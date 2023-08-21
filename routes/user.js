@@ -1,14 +1,34 @@
 const express = require("express");
-const { isAuthenticated } = require("../middleware/auth");
-const { registration, login, updateUserProfile, changeUserPassword, forgetPassword,getUser} = require("../users/controller");
+const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
+const {
+  UserRegistration,
+  DietitianRegistration,
+  login,
+  updateUserProfile,
+  changeUserPassword,
+  forgetPassword,
+  getUser,
+  fetchUser,
+} = require("../users/controller");
 const {otpVerification} = require("../middleware/otpVerfications.js");
 
 const router = express.Router();
-
-router.route("/register-user").post(otpVerification,registration);
-router.route("/login-user").post(login);
+router.route("/register-user").post(otpVerification, UserRegistration);
+router.route("/login").post(login);
+// router.route("/login-admin").post(loginAdmin);
 router.route("/update-user-profile").put(isAuthenticated,updateUserProfile);
-router.route("/get-user").get(isAuthenticated,getUser);
+router.route("/get-user-detail").get(isAuthenticated,getUser);
 router.route("/change-user-password").put(isAuthenticated,changeUserPassword);
 router.route("/forget-password").put(otpVerification,forgetPassword);
+
+
+
+router
+  .route("/fetch-user")
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("admin", "dietitian"),
+    fetchUser
+  );
+
 module.exports = router;

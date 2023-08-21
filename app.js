@@ -30,6 +30,7 @@ const progress = require("./routes/progress");
 const workoutTracker = require("./routes/workoutTracker");
 const waterAndFootTracker = require("./routes/waterAndFootTracker");
 const mealPlanner = require("./routes/mealPlanner");
+const dietitian = require("./routes/dietitian");
 
 
 app.use("/api", users);
@@ -39,5 +40,6 @@ app.use("/api", progress);
 app.use("/api", workoutTracker);
 app.use("/api", waterAndFootTracker);
 app.use("/api", mealPlanner);
+app.use("/api", dietitian);
 app.use(errorMiddleware);
 module.exports = app;
