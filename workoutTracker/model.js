@@ -39,6 +39,8 @@ const exerciseSchema = new mongoose.Schema({
   },
 });
 
+//a-z 
+
 const workoutSchema = new mongoose.Schema({
     name: {
       type: String,
@@ -69,6 +71,10 @@ const workoutSchema = new mongoose.Schema({
     },
 });
 
+//4
+//2 y,z
+//2,1,2
+
 const workoutRecommendationSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -96,12 +102,10 @@ const workoutRecommendationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-
   is_completed : {
     type: Boolean,
     default: false
   },
-
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -109,6 +113,9 @@ const workoutRecommendationSchema = new mongoose.Schema({
   },
 });
 
+
+//1,2,3,4
+//2,4
 
 
 // -> workout/ api -> excersise- > set_1, {set: {"1" : [execrise1,exe], "2", : [excersie2] }

@@ -9,7 +9,7 @@ const { assignDietitian } = require("../dietitian/controller");
 const router = express.Router();
 router
   .route("/assign-dietitian")
-  .post(isAuthenticated("web"), authorizedRoles("dietitian"), assignDietitian);
+  .post(isAuthenticated("web"), authorizedRoles("admin"), assignDietitian);
   router
     .route("/add-dietitian")
     .post(

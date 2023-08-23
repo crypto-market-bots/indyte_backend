@@ -16,9 +16,11 @@ const router = express.Router();
 router.route("/register-user").post(otpVerification, UserRegistration);
 router.route("/login").post(login);
 // router.route("/login-admin").post(loginAdmin);
-router.route("/update-user-profile").put(isAuthenticated,updateUserProfile);
-router.route("/get-user-detail").get(isAuthenticated,getUser);
-router.route("/change-user-password").put(isAuthenticated,changeUserPassword);
+router.route("/update-user-profile").put(isAuthenticated, updateUserProfile);
+router.route("/get-user-detail").get(isAuthenticated('web'), getUser);
+router
+  .route("/change-user-password")
+  .put(isAuthenticated("web"), changeUserPassword);
 router.route("/forget-password").put(otpVerification,forgetPassword);
 
 

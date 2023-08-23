@@ -336,7 +336,14 @@ exports.login =catchAsyncError(async (req, res, next) => {
 
 
 exports.getUser = catchAsyncError(async (req, res, next) => {
-  const user = await User.findById(req.user.id);
+  const from =req.params.from
+  let user;
+  if(!from){
+    user = await dietitian.findById(req.user.id);
+  }
+  else{
+     user = await User.findById(req.user.id);
+  }
   if (!user) return next(new ErrorHander("user does n't exit", 400));
   res.status(200).json({ success: true, user: user });
 });

@@ -1,33 +1,76 @@
 const mongoose = require('mongoose');
 
+
+
 const mealSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
-  nutritions: { // {"fat": {type: , value: }, ""}
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
+  nutritions: {
+    type: [
+      {
+        type: {
+          type: String,
+          required: true,
+        },
+        value: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+    _id: false,
+  },
+
+  required_ingredients: {
+    type: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+        type: {
+          type: String,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+    _id: false, // Exclude the _id field from required_ingredients subdocuments
+  },
+
+  steps: {
+    type: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        description: {
+          type: String,
+        },
+      },
+    ],
+    _id: false, // Exclude the _id field from steps subdocuments
   },
   description: {
     type: String,
     required: true,
   },
+  ytlink1: {
+    type: String,
+  },
   image: {
     type: String,
     required: true,
   },
-  required_ingredients: { // {"water": {value: 4, type : cup}}
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
-  },
-  steps: {  // {"1": "abcdefghijklmnop", "2":"abcdefghijklmnop" .....}
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
-  },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "dietitian",
     required: true,
   },
   created_time: {
@@ -35,6 +78,7 @@ const mealSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
 
 const userMealRecommendationSchema = new mongoose.Schema({
     user: {
@@ -53,7 +97,7 @@ const userMealRecommendationSchema = new mongoose.Schema({
     },
     meal_period: {
         type: String,
-        enum: ['lunch', 'breakfast', 'dinner'],
+        enum: ['LUNCH', 'BREAKFAST', 'DINNER'],
         required: true,
     },
     user_picked: {
@@ -70,6 +114,8 @@ const userMealRecommendationSchema = new mongoose.Schema({
         default: Date.now,
     },
 });
+
+
 
 const UserMealRecommendation = mongoose.model('UserMealRecommendation', userMealRecommendationSchema);
 const Meal = mongoose.model('Meal', mealSchema);
