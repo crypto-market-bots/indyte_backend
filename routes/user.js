@@ -2,7 +2,6 @@ const express = require("express");
 const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
 const {
   UserRegistration,
-  DietitianRegistration,
   login,
   updateUserProfile,
   changeUserPassword,
@@ -17,7 +16,10 @@ router.route("/register-user").post(otpVerification, UserRegistration);
 router.route("/login").post(login);
 // router.route("/login-admin").post(loginAdmin);
 router.route("/update-user-profile").put(isAuthenticated, updateUserProfile);
-router.route("/get-user-detail").get(isAuthenticated('web'), getUser);
+
+router.route("/get-user-detail").get(isAuthenticated('app'),getUser);
+
+
 router
   .route("/change-user-password")
   .put(isAuthenticated("web"), changeUserPassword);
@@ -25,12 +27,5 @@ router.route("/forget-password").put(otpVerification,forgetPassword);
 
 
 
-router
-  .route("/fetch-user")
-  .get(
-    isAuthenticated("web"),
-    authorizedRoles("admin", "dietitian"),
-    fetchUser
-  );
 
 module.exports = router;

@@ -31,6 +31,7 @@ const workoutTracker = require("./routes/workoutTracker");
 const waterAndFootTracker = require("./routes/waterAndFootTracker");
 const mealPlanner = require("./routes/mealPlanner");
 const dietitian = require("./routes/dietitian");
+const exercises = require("./routes/exercises");
 
 
 app.use("/api", users);
@@ -41,5 +42,7 @@ app.use("/api", workoutTracker);
 app.use("/api", waterAndFootTracker);
 app.use("/api", mealPlanner);
 app.use("/api", dietitian);
+app.use("/api", dietitian);
+app.use("/api", exercises);
 app.use(errorMiddleware);
 module.exports = app;

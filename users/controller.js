@@ -1,6 +1,7 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
 const  dietitian = require("../dietitian/model");
+const uploadAndPushImage = require("../Common/uploadToS3");
 const User = require("../users/model");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
@@ -13,179 +14,55 @@ const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
 });
+
 function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function uploadAndPushImage(image, imageName, email) {
-  if (image) {
-    try {
-      // Generate a random number using Math.random()
-      const randomNumber = getRandomNumber(100000, 999999);
-      // Construct the imageName using the profilepic-email-randomnumber format
-      const key = `${imageName}-${email}-${randomNumber}`;
+// async function uploadAndPushImage(image, imageName, email) {
+//   if (image) {
+//     try {
+//       // Generate a random number using Math.random()
+//       const randomNumber = getRandomNumber(100000, 999999);
+//       // Construct the imageName using the profilepic-email-randomnumber format
+//       const key = `${imageName}-${email}-${randomNumber}`;
 
-      const imageData = fs.readFileSync(image.tempFilePath);
+//       const imageData = fs.readFileSync(image.tempFilePath);
 
-      const uploadParams = {
-        Bucket: "indyte-static-images/profile",
-        Key: key,
-        Body: imageData,
-        ACL: "public-read",
-        ContentType: "image/jpeg",
-      };
+//       const uploadParams = {
+//         Bucket: "indyte-static-images/profile",
+//         Key: key,
+//         Body: imageData,
+//         ACL: "public-read",
+//         ContentType: "image/jpeg",
+//       };
 
-      // Wrap the s3.upload function in a Promise
-      const uploadPromise = new Promise((resolve, reject) => {
-        s3.upload(uploadParams, function (err, data) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(data);
-          }
-        });
-      });
+//       // Wrap the s3.upload function in a Promise
+//       const uploadPromise = new Promise((resolve, reject) => {
+//         s3.upload(uploadParams, function (err, data) {
+//           if (err) {
+//             reject(err);
+//           } else {
+//             resolve(data);
+//           }
+//         });
+//       });
 
-      // Wait for the upload to complete and get the data from the Promise
-      const uploadedData = await uploadPromise;
-      const data = {
-        key: key,
-        location: uploadedData.Location,
-      };
-      return data;
-    } catch (error) {
-      return `Failed to upload image ${imageName}: ${error.message}`;
-    }
-  }
-  return;
-}
+//       // Wait for the upload to complete and get the data from the Promise
+//       const uploadedData = await uploadPromise;
+//       const data = {
+//         key: key,
+//         location: uploadedData.Location,
+//       };
+//       return data;
+//     } catch (error) {
+//       return `Failed to upload image ${imageName}: ${error.message}`;
+//     }
+//   }
+//   return;
+// }
 
-exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
- const {
-   email,
-   phone,
-   first_name,
-   last_name,
-   password,
-   gender,
-   dob,
-   weight,
-   height,
-   qualification,
-   goal,
-   family_contact_number,
-   local_guardian_address,
-   local_address,
-   permanent_address,
-   id_card_number,
-   id_card_type,
-   photo_id,
-   study_details,
-   photo,
-   experience,
-   past_work_details,
- } = req.body;
 
-  console.log(req.body)
-
-  // const { profile_image } = req.files;
-
- if (
-   !email ||
-   !phone ||
-   !first_name ||
-   !last_name ||
-   !password ||
-   !gender ||
-   !dob ||
-   !weight ||
-   !height ||
-   !qualification ||
-   !goal ||
-   !family_contact_number ||
-   !local_guardian_address ||
-   !local_address ||
-   !id_card_number ||
-   !id_card_type ||
-   !photo_id ||
-   !study_details ||
-   !permanent_address ||
-   !photo ||
-   !experience ||
-   !past_work_details
- ) {
-   return next(new ErrorHander("All fields are required", 400));
- }
-
-  try {
-    const existingDietitian = await dietitian.findOne({
-      $or: [{ email: email }, { phone: phone }],
-    });
-
-    if (existingDietitian) {
-      return next(new ErrorHander("Dietitian Already Exists", 400));
-    }
-
-    const trimmedPassword = password.trim();
-    if (trimmedPassword.length < 6) {
-      return next(
-        new ErrorHander(
-          "Password should be greater than or equal to 6 characters",
-          400
-        )
-      );
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(trimmedPassword, salt);
-
-    // const data = await uploadAndPushImage(
-    //   profile_image,
-    //   "profile_image",
-    //   email
-    // );
-
-    // if (!data.location) {
-    //   return next(new ErrorHander(data));
-    // }
-
-    const newDietitian = new dietitian({
-      email,
-      phone,
-      first_name,
-      last_name,
-      password: hashPassword,
-      gender,
-      dob: new Date(dob),
-      weight,
-      height,
-      qualification,
-      goal,
-      family_contact_number,
-      local_address,
-      local_guardian_address,
-      permanent_address,
-      id_card_number,
-      id_card_type,
-      photo_id,
-      study_details,
-      photo,
-      experience,
-      past_work_details,
-      // image: data.location,
-      // profile_image_key: data.key,
-    });
-
-    await newDietitian.save();
-
-    res.status(200).send({
-      success: true,
-      message: "Dietitian Registration successfully",
-    });
-  } catch (error) {
-    return next(new ErrorHander(error.message, 400));
-  }
-});
 
 // const userOtpVerification = require("./userOtpVerfication");
 exports.UserRegistration = catchAsyncError(async (req, res, next) => {
@@ -350,48 +227,6 @@ exports.getUser = catchAsyncError(async (req, res, next) => {
 
 
 
-exports.fetchUser = catchAsyncError(async (req, res, next) => {
-  const type = req.query.type;
-  const mode = req.user.type;
-  console.log(mode)
-  try {
-    if (!type || (type != "dietitian" && type != "user")) {
-      res.status(500).json({ success: false, message: "invalid Type" });
-    }
-    else{
-      if (type == "dietitian" && mode == "admin") {
-        const data = await dietitian.find();
-        res.status(201).json({
-          success: true,
-          data: data,
-        });
-      } else if (type == "user" && mode == "admin") {
-        const data = await User.find();
-        res.status(201).json({
-          success: true,
-          data: data,
-        });
-      } else if (type == "user" && mode == "dietitian") {
-        const data = await User.find();
-        res.status(201).json({
-          success: true,
-          data: data,
-        });
-      }
-      else{
-        res
-          .status(400)
-          .json({
-            success: false,
-            message: "Can not acess dietitian as dietitian",
-          });
-      }
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: "failed to fetch user" });
-  }
-  
-});
 
 
 
@@ -443,24 +278,7 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
 });
 
 // Function to delete an S3 object and return a promise
-function deleteS3Object(key) {
-  console.log(key)
-  return new Promise((resolve, reject) => {
-    const params =  {
-      Bucket:"indyte-static-images",
-      Key:key
-    }
-    s3.deleteObject(params,
-      (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data);
-        }
-      }
-    );
-  });
-}
+
 
 //this controller is run when we fill prevous password also
 exports.changeUserPassword = catchAsyncError(async (req, res, next) => {

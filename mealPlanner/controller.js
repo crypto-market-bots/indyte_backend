@@ -191,46 +191,60 @@ exports.deleteMeal = catchAsyncError(async (req, res, next) => {
 });
 
 
-// exports.updateMeal = catchAsyncError(async (req, res, next) => {
+exports.updateMeal = catchAsyncError(async (req, res, next) => {
+  try {
+    const {
+      name,
+      nutritions,
+      description,
+      ytlink1,
+      required_ingredients,
+      image,
+      steps,
+    } = req.body;
 
-//   const meal = await User.findById(req.params.id);
-//   if (!meal)
-//     return next(
-//       new ErrorHander("Some error occurred. Meal doesn't exist. Try again", 400)
-//     );
+    // Validate the presence of required fields
+    if (
+      !name ||
+      !description ||
+      !image ||
+      !nutritions ||
+      !required_ingredients ||
+      !steps
+    ) {
+      return next(new ErrorHander("All fields are required", 400));
+    }
 
-//   if (req.files && req.files.profile_image) {
-//     try {
-//       const data = await uploadAndPushImage(
-//         req.files.profile_image,
-//         "profile_image",
-//         user.email
-//       );
-//       console.log(data);
-//       if (!data.location) return next(new ErrorHander(data));
+    // Assuming you have user authentication and req.user contains the user's ID
+    const updated_by = req.user._id;
 
-//       // Delete the user's previous image
+    // Find the meal by ID and update its fields
+    const updatedMeal = await Meal.findByIdAndUpdate(
+      req.params.mealId,
+      {
+        name,
+        nutritions,
+        description,
+        ytlink1,
+        image,
+        required_ingredients,
+        steps,
+        updated_by,
+      },
+      { new: true } // Return the updated document
+    );
 
-//       req.body.image = data.location;
-//       req.body.profile_image_key = data.key;
-//     } catch (error) {
-//       return next(new ErrorHander(error));
-//     }
-//   }
+    if (!updatedMeal) {
+      return next(new ErrorHander("Meal not found", 404));
+    }
 
-//   if (req.body.image === "") {
-//     req.body.profile_image_key = "";
-//   }
-
-//   const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
-//     new: true,
-//     runValidators: true,
-//     useFindAndModify: false,
-//   });
-
-//   res.status(200).json({
-//     success: true,
-//     message: "User details updated successfully",
-//   });
-
-// });
+    res.status(200).json({
+      success: true,
+      message: "Meal updated successfully",
+      data: updatedMeal,
+    });
+  } catch (error) {
+    // Handle any error that occurred during the process
+    return next(new ErrorHander(error.message, 500));
+  }
+});
