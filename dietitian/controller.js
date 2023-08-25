@@ -10,7 +10,7 @@ AWS.config.logger = console;
 
 
 exports.assignDietitian = catchAsyncError(async (req, res, next) => {
-  console.log("the assign dietitian is also ")
+  console.log("the assign dietitian is also called")
       const {
         user_id,
         dietitian_id,

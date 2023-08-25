@@ -46,7 +46,7 @@ exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
         // req.user = await dietitian.findById(decodedData.userID);
         if (!req.user) {
           return next(
-            new ErrorHander("You are not a Valid User or seller", 400)
+            new ErrorHander("You are not a Valid User ", 400)
           );
         }
         //await Seller.findById(decodedData.userID));
