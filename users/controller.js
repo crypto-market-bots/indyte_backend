@@ -115,7 +115,7 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
 
-  const data = await uploadAndPushImage(profile_image, "profile_image", email);
+  const data = await uploadAndPushImage('type',profile_image, "profile_image", email);
   if (!data.location) return next(new ErrorHander(data));
   req.body.image = data.location;
   req.body.profile_image_key = data.key;

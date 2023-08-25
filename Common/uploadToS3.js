@@ -12,18 +12,16 @@ function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function uploadAndPushImage(image, imageName, email) {
+async function uploadAndPushImage(type,image, imageName, email) {
   if (image) {
     try {
       // Generate a random number using Math.random()
       const randomNumber = getRandomNumber(100000, 999999);
       // Construct the imageName using the profilepic-email-randomnumber format
       const key = `${imageName}-${email}-${randomNumber}`;
-
       const imageData = fs.readFileSync(image.tempFilePath);
-
       const uploadParams = {
-        Bucket: "indyte-static-images/profile",
+        Bucket: `indyte-static-images/${type}`,
         Key: key,
         Body: imageData,
         ACL: "public-read",

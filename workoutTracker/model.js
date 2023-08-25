@@ -1,37 +1,57 @@
 const mongoose = require('mongoose');
 
-
-//a-z 
-
-const workoutSchema = new mongoose.Schema({
+const workoutSchema = new mongoose.Schema(
+  {
     name: {
       type: String,
       required: true,
     },
-    difficulty: {
+    description: {
       type: String,
       required: true,
     },
-    physical_equipments : { // {"Barbell": {image_link: "s3://"}}
-        type: mongoose.Schema.Types.Mixed,
-        required: true,
+    image: {
+      type: String,
+      required: true,
+    },
+    physical_equipments: {
+      type: [
+        {
+          name: {
+            type: String,
+            required: true,
+          },
+          image: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+      required: true,
+      _id: false,
+    },
+    calorie_burn: {
+      type: Number,
+      required: true,
     },
     exercises: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Exercise',
-        }
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Exercise",
+      },
     ],
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "dieitian", // Assuming 'User' is the model name for dietitians
       required: true,
     },
-    created_time: {
-      type: Date,
-      default: Date.now,
-    },
-});
+  },
+  {
+    timestamps: true, // Adds created_at and updated_at fields
+  }
+);
+
+
 
 //4
 //2 y,z

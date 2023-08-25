@@ -10,7 +10,7 @@ AWS.config.logger = console;
 
 
 exports.assignDietitian = catchAsyncError(async (req, res, next) => {
-  console.log("the assign dietitian is also called")
+  console.log("the assign dietitian is also ")
       const {
         user_id,
         dietitian_id,
@@ -59,14 +59,13 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     id_card_type,
     photo_id,
     study_details,
-    photo,
     experience,
     past_work_details,
   } = req.body;
 
   console.log(req.body);
 
-  // const { profile_image } = req.files;
+  const { photo } = req.files;
 
   if (
     !email ||
@@ -81,19 +80,22 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     !qualification ||
     !goal ||
     !family_contact_number ||
-    !local_guardian_address ||
-    !local_address ||
+    // !local_guardian_address ||
+    // !local_address ||
     !id_card_number ||
     !id_card_type ||
     !photo_id ||
     !study_details ||
-    !permanent_address ||
+    // !permanent_address ||
     !photo ||
     !experience ||
     !past_work_details
   ) {
     return next(new ErrorHander("All fields are required", 400));
   }
+
+
+  
 
   try {
     const existingDietitian = await dietitian.findOne({
@@ -126,6 +128,8 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     // if (!data.location) {
     //   return next(new ErrorHander(data));
     // }
+      
+
 
     const newDietitian = new dietitian({
       email,
@@ -153,6 +157,12 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
       // image: data.location,
       // profile_image_key: data.key,
     });
+
+const data = await uploadAndPushImage("type", photo, "profile_image", email);
+if (!data.location) return next(new ErrorHander(data));
+newDietitian.photo = data.location;
+newDietitian.photo_id = data.key;
+consolt.log("req.body.image", req.body.image, req.body.profile_image_key);
 
     await newDietitian.save();
 
