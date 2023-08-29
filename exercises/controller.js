@@ -1,5 +1,6 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
+const { uploadAndPushImage } = require("../Common/uploadToS3");
 const { Exercise } = require("./model");
 const moment = require("moment");
 
@@ -12,12 +13,19 @@ exports.createExercise = catchAsyncError(async (req, res, next) => {
       ytlink1,
       calorie_burn,
       repetition,
-      timetoperform,
-      image,
-      steps,
     } = req.body;
 
     console.log(req.body)
+
+    const { exercise_image } = req.files;
+
+
+    const steps = [
+      {
+        title: req.body["steps[0][title]"],
+        description: req.body["steps[0][description]"],
+      },
+    ];
     // Validate the presence of required fields
     if (
       !name ||
@@ -26,11 +34,15 @@ exports.createExercise = catchAsyncError(async (req, res, next) => {
       !ytlink1 ||
       !calorie_burn ||
       !repetition ||
-      !timetoperform ||
-      !image ||
-      !steps.length
+      !exercise_image 
     ) {
       return next(new ErrorHander("All fields are required", 400));
+    }
+
+    const sameExercise = await Exercise.findOne({ name: name });
+    if (sameExercise) {
+      console.log("Exercise With same name already exist ",sameExercise);
+      return next(new ErrorHander("Exercise with same name already exist ", 400));
     }
 
     // Assuming you have user authentication and req.user contains the user's ID
@@ -43,11 +55,26 @@ exports.createExercise = catchAsyncError(async (req, res, next) => {
       ytlink1,
       calorie_burn,
       repetition,
-      timetoperform,
-      image,
+      exercise_image,
       steps,
       created_by,
     });
+
+    const exercise_image_data = await uploadAndPushImage(
+      "images/exercise",
+      exercise_image,
+      "exercise_image",
+      name
+    );
+
+    if (!exercise_image_data.location) return next(new ErrorHander(data));
+    newExercise.exercise_image = exercise_image_data.location;
+    newExercise.exercise_image_key = `images/exercise${exercise_image_data.key}`;
+    console.log(
+      "req.body.image",
+      exercise_image_data.location,
+      exercise_image_data.key
+    );
 
     // Save the new exercise to the database
     const savedExercise = await newExercise.save();

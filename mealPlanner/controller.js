@@ -1,4 +1,6 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
+const { uploadAndPushImage } = require("../Common/uploadToS3");
+
 const ErrorHander = require("../utils/errorhander");
 const { Meal, UserMealRecommendation } = require("./model");
 const moment = require("moment");
@@ -116,39 +118,90 @@ exports.addMeal = catchAsyncError(async (req, res, next) => {
   try {
     const {
       name,
-      nutritions,
       description,
       ytlink1,
-      required_ingredients,
-      image,
-      steps,
     } = req.body;
 
+
+    const {meal_image}=req.files
+
+
+ const nutritions = [
+   {
+     type: req.body["nutritions[0][type]"],
+     value: req.body["nutritions[0][value]"],
+   },
+   {
+     type: req.body["nutritions[1][type]"],
+     value: req.body["nutritions[1][value]"],
+   },
+ ];
+
+ // Process required ingredients data
+ const required_ingredients = [
+   {
+     name: req.body["required_ingredients[0][name]"],
+     type: req.body["required_ingredients[0][type]"],
+     quantity: req.body["required_ingredients[0][quantity]"],
+   },
+ ];
+
+ // Process steps data
+ const steps = [
+   {
+     title: req.body["steps[0][title]"],
+     description: req.body["steps[0][description]"],
+   },
+
+ ];
+
     // Validate the presence of required fields
+    console.log(req.body)
+
     if (
       !name ||
       !description ||
-      !image ||
+      !meal_image ||
       !nutritions ||
-      !required_ingredients.length // Check the length of the array
+      !required_ingredients.length 
     ) {
       return next(new ErrorHander("All fields are required", 400));
     }
 
 
-    // Assuming you have user authentication and req.user contains the user's ID
     const created_by = req.user._id;
+
+    const sameMeal =await Meal.findOne({name:name})
+    if(sameMeal){
+      console.log("The Meal with same name already exist ",sameMeal)
+      return next(new ErrorHander("Meal with same name already exist ", 400));
+    }
 
     const newMeal = new Meal({
       name,
       nutritions,
       description,
       ytlink1,
-      image,
       required_ingredients,
       created_by,
       steps, // Include the steps array
     });
+
+    const meal_image_data = await uploadAndPushImage(
+      "images/meal",
+      meal_image,
+      "meal_image",
+      name
+    );
+
+    if (!meal_image_data.location) return next(new ErrorHander(data));
+    newMeal.meal_image = meal_image_data.location;
+    newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
+    console.log(
+      "req.body.image",
+      meal_image_data.location,
+      meal_image_data.key
+    );
 
     // Save the new meal to the database
     const savedMeal = await newMeal.save();

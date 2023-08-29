@@ -26,11 +26,11 @@ const exerciseSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  timetoperform: {
-    type: String, // You can validate the format in your application logic
+  exercise_image: {
+    type: String,
     required: true,
   },
-  image: {
+  exercise_image_key: {
     type: String,
     required: true,
   },

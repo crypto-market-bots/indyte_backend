@@ -1,7 +1,7 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
 const  dietitian = require("../dietitian/model");
-const uploadAndPushImage = require("../Common/uploadToS3");
+const { uploadAndPushImage, deleteS3Object } = require("../Common/uploadToS3");
 const User = require("../users/model");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
@@ -115,10 +115,15 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
 
-  const data = await uploadAndPushImage('type',profile_image, "profile_image", email);
+  const data = await uploadAndPushImage(
+    "user/profile",
+    profile_image,
+    "profile_image",
+    email
+  );
   if (!data.location) return next(new ErrorHander(data));
   req.body.image = data.location;
-  req.body.profile_image_key = data.key;
+  req.body.profile_image_key = `user/profile/${data.key}`;
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -184,7 +189,8 @@ exports.login =catchAsyncError(async (req, res, next) => {
       if (user) {
         console.log(user)
         //  //user);
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = password===user.password
+        // const isMatch = await bcrypt.compare(password, user.password);
         if (user.email == email && isMatch) {
           // Generate JWT Token
           const token = jwt.sign(
@@ -376,4 +382,15 @@ exports.forgetPassword = catchAsyncError(async (req, res, next) => {
   } else {
     return next(new ErrorHander("User doesn't exists with this email", 400));
   }
+});
+
+
+exports.deleteS3Image = catchAsyncError(async (req, res, next) => {
+  const {key}=req.query
+  console.log("This is key from Api",key)  
+  deleteS3Object(key);
+  res.status(200).json({
+    success: true,
+    message: "User details updated successfully",
+  });
 });

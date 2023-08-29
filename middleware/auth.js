@@ -26,7 +26,7 @@ exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
 });
 
 exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
-  console.log("called")
+  console.log("Is auntheticated called")
   const bearerHeader = req.headers["authorization"];
   console.log(role,"this is role ")
   if (typeof bearerHeader !== "undefined") {

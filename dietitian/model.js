@@ -53,7 +53,7 @@ const dietitianSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "user",
+      default: "dietitian",
     },
     gender: {
       type: String,
@@ -76,10 +76,6 @@ const dietitianSchema = new mongoose.Schema(
     height: {
       type: Number,
       required: [true, "Please enter the height in cm"],
-    },
-    goal: {
-      type: String,
-      required: [true, "Please enter the Goal"],
     },
     family_contact_number: {
       type: String,
@@ -163,16 +159,7 @@ const dietitianSchema = new mongoose.Schema(
         required: [true, "Please enter Country"],
       },
     },
-    id_card_number: {
-      type: String,
-      required: [true, "Please enter the ID Card Number"],
-    },
-    id_card_type: {
-      type: String,
-      required: [true, "Please enter the ID Card Type"],
-      enum: ["AADHAR", "PAN", "LICENSE"],
-    },
-    photo_id: {
+    profile_photo_key: {
       type: String,
       required: [true, "Please enter the Photo ID"],
     },
@@ -180,9 +167,17 @@ const dietitianSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please enter the Study Details"],
     },
-    photo: {
+    profile_photo: {
       type: String,
       required: [true, "Please upload a Photo"],
+    },
+    id_card_photo: {
+      type: String,
+      required: [true, "Please upload a Photo"],
+    },
+    id_card_photo_key: {
+      type: String,
+      required: [true, "Please upload a ID Card Photo Key"],
     },
     experience: {
       type: String,

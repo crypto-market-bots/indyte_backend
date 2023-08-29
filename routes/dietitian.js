@@ -29,13 +29,7 @@ router
     .post(isAuthenticated("web"), authorizedRoles("admin"), DietitianUpdation);
 
 
-router
-  .route("/fetch-user")
-  .get(
-    isAuthenticated("web"),
-    authorizedRoles("admin", "dietitian"),
-    fetchUser
-  );
+
 
 router
   .route("/fetch-user")

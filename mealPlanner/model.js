@@ -64,7 +64,11 @@ const mealSchema = new mongoose.Schema({
   ytlink1: {
     type: String,
   },
-  image: {
+  meal_image: {
+    type: String,
+    required: true,
+  },
+  meal_image_key: {
     type: String,
     required: true,
   },

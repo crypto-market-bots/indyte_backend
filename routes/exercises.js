@@ -11,7 +11,7 @@ const router = express.Router();
 
 router
   .route("/add-exercise")
-  .post(isAuthenticated("web"), authorizedRoles("dietitian"), createExercise);
+  .post(isAuthenticated("web"), authorizedRoles("dietitian",'admin'), createExercise);
 router
   .route("/delete-exercise/:exerciseId")
   .delete(isAuthenticated("web"), authorizedRoles("dietitian"), deleteExercise);

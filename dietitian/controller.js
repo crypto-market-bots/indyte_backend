@@ -1,6 +1,8 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
 const User  = require("../users/model");
+const dietitian = require("../dietitian/model");
+const {uploadAndPushImage} = require("../Common/uploadToS3");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
@@ -52,12 +54,8 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     qualification,
     goal,
     family_contact_number,
-    local_guardian_address,
-    local_address,
-    permanent_address,
     id_card_number,
     id_card_type,
-    photo_id,
     study_details,
     experience,
     past_work_details,
@@ -65,7 +63,35 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
 
   console.log(req.body);
 
-  const { photo } = req.files;
+  const local_address = {
+    address_line1: req.body["local_address[address_line1]"],
+    address_line2: req.body["local_address[address_line2]"],
+    city: req.body["local_address[city]"],
+    state: req.body["local_address[state]"],
+    zip: req.body["local_address[zip]"],
+    country: req.body["local_address[country]"],
+  };
+
+  const local_guardian_address = {
+    address_line1: req.body["local_guardian_address[address_line1]"],
+    address_line2: req.body["local_guardian_address[address_line2]"],
+    city: req.body["local_guardian_address[city]"],
+    state: req.body["local_guardian_address[state]"],
+    zip: req.body["local_guardian_address[zip]"],
+    country: req.body["local_guardian_address[country]"],
+  };
+
+  const permanent_address = {
+    address_line1: req.body["permanent_address[address_line1]"],
+    address_line2: req.body["permanent_address[address_line2]"],
+    city: req.body["permanent_address[city]"],
+    state: req.body["permanent_address[state]"],
+    zip: req.body["permanent_address[zip]"],
+    country: req.body["permanent_address[country]"],
+  };
+
+
+  const { profile_photo,id_card_photo } = req.files;
 
   if (
     !email ||
@@ -78,17 +104,16 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     !weight ||
     !height ||
     !qualification ||
-    !goal ||
     !family_contact_number ||
-    // !local_guardian_address ||
-    // !local_address ||
+    !local_guardian_address ||
+    !local_address ||
     !id_card_number ||
     !id_card_type ||
-    !photo_id ||
     !study_details ||
-    // !permanent_address ||
-    !photo ||
+    !permanent_address ||
+    !profile_photo ||
     !experience ||
+    !id_card_photo||
     !past_work_details
   ) {
     return next(new ErrorHander("All fields are required", 400));
@@ -98,11 +123,17 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
   
 
   try {
+const normalizedEmail = email.trim().toLowerCase();
+
+
+    console.log("email", email, "phone is phone", phone);
     const existingDietitian = await dietitian.findOne({
-      $or: [{ email: email }, { phone: phone }],
+      $or: [{ email: normalizedEmail }, { phone: phone }],
     });
 
     if (existingDietitian) {
+      console.log("Existing dietitian email:", existingDietitian.email);
+      console.log("Provided email:", email);
       return next(new ErrorHander("Dietitian Already Exists", 400));
     }
 
@@ -130,7 +161,6 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     // }
       
 
-
     const newDietitian = new dietitian({
       email,
       phone,
@@ -149,20 +179,44 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
       permanent_address,
       id_card_number,
       id_card_type,
-      photo_id,
       study_details,
-      photo,
+      profile_photo,
       experience,
       past_work_details,
       // image: data.location,
       // profile_image_key: data.key,
     });
 
-const data = await uploadAndPushImage("type", photo, "profile_image", email);
-if (!data.location) return next(new ErrorHander(data));
-newDietitian.photo = data.location;
-newDietitian.photo_id = data.key;
-consolt.log("req.body.image", req.body.image, req.body.profile_image_key);
+const profile_picture_data = await uploadAndPushImage(
+  "dietitian/profile",
+  profile_photo,
+  "profile_image",
+  email
+);
+
+
+if (!profile_picture_data.location) return next(new ErrorHander(data));
+newDietitian.profile_photo = profile_picture_data.location;
+newDietitian.profile_photo_key = profile_picture_data.key;
+console.log(
+  "req.body.image",
+  profile_picture_data.location,
+  profile_picture_data.key
+);
+
+const id_card_data = await uploadAndPushImage(
+  "dietitian/document",
+  id_card_photo,
+  "profile_image",
+  email
+);
+
+
+if (!id_card_data.location) return next(new ErrorHander(data));
+newDietitian.id_card_photo = id_card_data.location;
+newDietitian.id_card_photo_key = id_card_data.key;
+console.log("req.body.image", id_card_data.location, id_card_data.key);
+
 
     await newDietitian.save();
 
@@ -174,6 +228,8 @@ consolt.log("req.body.image", req.body.image, req.body.profile_image_key);
     return next(new ErrorHander(error.message, 400));
   }
 });
+
+
 
 exports.DietitianUpdation = catchAsyncError(async (req, res, next) => {
   const dietitianId = req.params.id; // Assuming you get the dietitian ID from the request parameters
@@ -211,11 +267,13 @@ exports.fetchUser = catchAsyncError(async (req, res, next) => {
   const type = req.query.type;
   const mode = req.user.type;
   console.log(mode);
+  console.log(type);
   try {
     if (!type || (type != "dietitian" && type != "user")) {
       res.status(500).json({ success: false, message: "invalid Type" });
     } else {
       if (type == "dietitian" && mode == "admin") {
+        console.log("it Come here")
         const data = await dietitian.find();
         res.status(201).json({
           success: true,

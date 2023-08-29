@@ -12,16 +12,16 @@ function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function uploadAndPushImage(type,image, imageName, email) {
+async function uploadAndPushImage(folder,image, imageName, unique_parameter) {
   if (image) {
     try {
       // Generate a random number using Math.random()
       const randomNumber = getRandomNumber(100000, 999999);
       // Construct the imageName using the profilepic-email-randomnumber format
-      const key = `${imageName}-${email}-${randomNumber}`;
+      const key = `${imageName}-${unique_parameter}-${randomNumber}`;
       const imageData = fs.readFileSync(image.tempFilePath);
       const uploadParams = {
-        Bucket: `indyte-static-images/${type}`,
+        Bucket: `indyte-static-images/${folder}`,
         Key: key,
         Body: imageData,
         ACL: "public-read",
@@ -53,7 +53,7 @@ async function uploadAndPushImage(type,image, imageName, email) {
   return;
 }
 
-function deleteS3Object(key) {
+async function deleteS3Object(key) {
   console.log(key);
   return new Promise((resolve, reject) => {
     const params = {
@@ -72,4 +72,5 @@ function deleteS3Object(key) {
 
 module.exports = {
   uploadAndPushImage,
+  deleteS3Object,
 };

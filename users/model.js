@@ -26,12 +26,13 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
     dietitian: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "dietitian", // Reference to the Dietitian model (replace "Dietitian" with the actual model name)
       default: null,
       validate: {
-        validator: isValidObjectId,
+        validator: (value) => isValidObjectId(value) || value === null,
         message: "Invalid dietitian ID",
-      }, // Set default value as null
+      },
     },
     phone: {
       type: Number,
