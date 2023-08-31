@@ -19,6 +19,11 @@ const physicalEquipmentSchema = new mongoose.Schema(
       ref: "dietitian",
       required: true,
     },
+    updated_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "dietitian",
+      required: true,
+    },
   },
   { timestamps: true }
 );

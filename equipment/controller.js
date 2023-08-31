@@ -25,12 +25,12 @@ exports.AddEquipment = catchAsyncError(async (req, res, next) => {
 
     // Assuming you have user authentication and req.user contains the user's ID
     const created_by = req.user._id;
+    const updated_by = req.user._id;
     console.log("Created By", created_by);
-    const newExercise = new Exercise({
+    const newEquipment = new PhysicalEquipment({
       equipment_name,
-      equipment_image,
-      equipment_image_key,
       created_by,
+      updated_by,
     });
 
     const equipment_image_data = await uploadAndPushImage(
@@ -40,19 +40,19 @@ exports.AddEquipment = catchAsyncError(async (req, res, next) => {
       equipment_name
     );
 
-    if (!exercise_image_data.location) return next(new ErrorHander(data));
-    newExercise.exercise_image = exercise_image_data.location;
-    newExercise.exercise_image_key = `images/exercise${exercise_image_data.key}`;
+    if (!equipment_image_data.location) return next(new ErrorHander(data));
+    newEquipment.equipment_image = equipment_image_data.location;
+    newEquipment.equipment_image_key = `images/equipment${equipment_image_data.key}`;
     console.log(
       "req.body.image",
-      exercise_image_data.location,
-      exercise_image_data.key
+      equipment_image_data.location,
+      equipment_image_data.key
     );
 
     // Save the new exercise to the database
-    const savedExercise = await newExercise.save();
+    const savedEquipment = await newEquipment.save();
 
-    if (!savedExercise) {
+    if (!savedEquipment) {
       return next(
         new ErrorHandler("Failed to save exercise to the database", 500)
       );
@@ -60,8 +60,8 @@ exports.AddEquipment = catchAsyncError(async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: "Exercise added successfully",
-      data: savedExercise,
+      message: "Equipment added successfully",
+      data: savedEquipment,
     });
   } catch (error) {
     // Handle any error that occurred during the process
@@ -69,82 +69,92 @@ exports.AddEquipment = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
+
 exports.DeleteEquipment = catchAsyncError(async (req, res, next) => {
-  const exerciseId = req.params.exerciseId; // Update the parameter name
-  console.log("this is exercise id", exerciseId);
+  const equipmentId = req.params.equipmentId; // Update the parameter name
+  console.log("this is exercise id", equipmentId);
   try {
-    if (!exerciseId) {
+    if (!equipmentId) {
       return res
         .status(400)
-        .json({ success: false, message: "Exercise ID is missing." });
+        .json({ success: false, message: "Equipment ID is missing." });
     }
 
-    const deletedExercise = await Exercise.findByIdAndDelete(exerciseId);
+    const deletedEquipment = await PhysicalEquipment.findByIdAndDelete(
+      equipmentId
+    );
 
-    if (!deletedExercise) {
+    if (!deletedEquipment) {
       return res
         .status(404)
-        .json({ success: false, message: "Exercise not found." });
+        .json({ success: false, message: "Equipment not found." });
     }
 
     return res
       .status(200)
-      .json({ success: true, message: "Exercise deleted successfully" });
+      .json({ success: true, message: "Equipment deleted successfully" });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 });
 
+
+
 exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
   try {
-    const {
-      name,
-      difficulty_level,
-      description,
-      ytlink1,
-      calorie_burn,
-      repetition,
-      timetoperform,
-      image,
-      steps,
-    } = req.body;
-
-    // Validate the presence of required fields
+    const { equipment_name } = req.body;
+    const {equipment_image}=req.files
+    const equipmentId = req.params.exerciseId;
+    let updatedEquipment;
     if (
-      !name ||
-      !difficulty_level ||
-      !description ||
-      !ytlink1 ||
-      !calorie_burn ||
-      !repetition ||
-      !timetoperform ||
-      !image ||
-      !steps
+      !equipment_name
     ) {
       return next(new ErrorHander("All fields are required", 400));
     }
 
-    // Assuming you have user authentication and req.user contains the user's ID
-    const updated_by = req.user._id;
+    if(!equipment_image){
+      const updated_by = req.user._id;
+      updatedEquipment = await PhysicalEquipment.findByIdAndUpdate(
+        equipmentId,
+        {
+          equipment_name,
+          updated_by,
+        },
+        { new: true } // Return the updated document
+      );
+    }
+    else{
+      const updated_by = req.user._id;
+      updatedEquipment = await PhysicalEquipment.findByIdAndUpdate(
+        equipmentId,
+        {
+          equipment_name,
+          updated_by,
+        },
+        { new: true }
+      );
+        const equipment_image_data = await uploadAndPushImage(
+          "images/equipment",
+          equipment_image,
+          "equipment_image",
+          equipment_name
+        );
+
+        if (!equipment_image_data.location) return next(new ErrorHander(data));
+        newEquipment.equipment_image = equipment_image_data.location;
+        newEquipment.equipment_image_key = `images/equipment${equipment_image_data.key}`;
+        console.log(
+          "req.body.image",
+          equipment_image_data.location,
+          equipment_image_data.key
+        );
+    }
+
+    
 
     // Find the exercise by ID and update its fields
-    const updatedExercise = await Exercise.findByIdAndUpdate(
-      req.params.exerciseId, // Update the parameter name
-      {
-        name,
-        difficulty_level,
-        description,
-        ytlink1,
-        calorie_burn,
-        repetition,
-        timetoperform,
-        image,
-        steps,
-        updated_by,
-      },
-      { new: true } // Return the updated document
-    );
-
+    
     if (!updatedExercise) {
       return next(new ErrorHander("Exercise not found", 404));
     }
@@ -160,14 +170,18 @@ exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
+
+
 exports.FetchAllEquipment = catchAsyncError(async (req, res, next) => {
-  const exercises = await Exercise.find();
+  const exercises = await PhysicalEquipment.find();
   res.status(200).json({
     success: true,
-    message: "Exercises fetched successfully",
+    message: "Equipment fetched successfully",
     data: exercises,
   });
 });
+
 
 exports.FetchEquipment = catchAsyncError(async (req, res, next) => {
   const equipmentId = req.params.equipmentId;
@@ -184,6 +198,6 @@ exports.FetchEquipment = catchAsyncError(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Equipment fetched successfully",
-    data: exercise,
+    data: equipment,
   });
 });

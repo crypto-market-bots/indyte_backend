@@ -14,15 +14,31 @@ router
   .post(isAuthenticated("web"), authorizedRoles("dietitian",'admin'), createExercise);
 router
   .route("/delete-exercise/:exerciseId")
-  .delete(isAuthenticated("web"), authorizedRoles("dietitian"), deleteExercise);
+  .delete(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian", "admin"),
+    deleteExercise
+  );
 router
   .route("/update-exercise/:exerciseId")
-  .put(isAuthenticated("web"), authorizedRoles("dietitian"), updateExercise);
+  .put(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian", "admin"),
+    updateExercise
+  );
 router
   .route("/exercises")
-  .get(isAuthenticated("web"), authorizedRoles("dietitian"), getAllExercises);
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian", "admin"),
+    getAllExercises
+  );
 router
   .route("/exercises/:exerciseId")
-  .get(isAuthenticated("web"), authorizedRoles("dietitian"), getExerciseById);
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian", "admin"),
+    getExerciseById
+  );
 
 module.exports = router;

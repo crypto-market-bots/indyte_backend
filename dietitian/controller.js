@@ -314,13 +314,16 @@ exports.fetchUserDetail = catchAsyncError(async (req, res, next) => {
      res.status(500).json({ success: false, message: "Incorrect details" });
    } else {
      if (type == "dietitian") {
-       const data = await dietitian.find({ _id: id });
+       const data = await dietitian.findOne({ _id: id });
        res.status(201).json({
          success: true,
          data: data,
        });
      } else if (type == "user") {
-       const data = await User.find({_id:id});
+       const data = await User.find({ _id: id }).populate(
+         "dietitian",
+         "first_name last_name"
+       );
        res.status(201).json({
          success: true,
          data: data,

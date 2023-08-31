@@ -12,23 +12,39 @@ const router = express.Router();
 
 router
   .route("/add-equipment")
-  .post(isAuthenticated("web"), authorizedRoles("admin"), AddEquipment);
+  .post(isAuthenticated("web"), authorizedRoles("admin",'dietitian'), AddEquipment);
 
 router
-  .route("/delete-equipment")
-  .delete(isAuthenticated("web"), authorizedRoles("admin"), DeleteEquipment);
+  .route("/delete-equipment/:equipmentId")
+  .delete(
+    isAuthenticated("web"),
+    authorizedRoles("admin", "dietitian"),
+    DeleteEquipment
+  );
 
 router
-  .route("/update-equipment")
-  .put(isAuthenticated("web"), authorizedRoles("admin"), UpdateEquipment);
+  .route("/update-equipment/:equipmentId")
+  .put(
+    isAuthenticated("web"),
+    authorizedRoles("admin", "dietitian"),
+    UpdateEquipment
+  );
 
 router
   .route("/equipment")
-  .get(isAuthenticated("web"), authorizedRoles("admin"), FetchAllEquipment);
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("admin", "dietitian"),
+    FetchAllEquipment
+  );
 
 router
-  .route("/equipment")
-  .get(isAuthenticated("web"), authorizedRoles("admin"), FetchEquipment);
+  .route("/equipment/:equipmentId")
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("admin", "dietitian"),
+    FetchEquipment
+  );
 
 
 
