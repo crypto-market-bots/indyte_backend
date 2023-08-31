@@ -189,8 +189,8 @@ exports.login =catchAsyncError(async (req, res, next) => {
       if (user) {
         console.log(user)
         //  //user);
-        const isMatch = password===user.password
-        // const isMatch = await bcrypt.compare(password, user.password);
+        // const isMatch = password===user.password
+        const isMatch = await bcrypt.compare(password, user.password);
         if (user.email == email && isMatch) {
           // Generate JWT Token
           const token = jwt.sign(
