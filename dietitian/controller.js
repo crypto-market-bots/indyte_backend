@@ -305,10 +305,9 @@ exports.fetchUser = catchAsyncError(async (req, res, next) => {
 
 
 exports.fetchUserDetail = catchAsyncError(async (req, res, next) => {
-  type=req.params.type
-  id=req.params.id
  const type = req.query.type;
  const mode = req.user.type;
+ const { id } = req.params;
  console.log(mode);
  try {
    if (!type || !id ||(type != "dietitian" && type != "user")) {

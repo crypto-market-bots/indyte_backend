@@ -14,22 +14,12 @@ const workoutSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    physical_equipments: {
-      type: [
-        {
-          name: {
-            type: String,
-            required: true,
-          },
-          image: {
-            type: String,
-            required: true,
-          },
-        },
-      ],
-      required: true,
-      _id: false,
-    },
+    physical_equipments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "PhysicalEquipment", // Reference the PhysicalEquipment model
+      },
+    ],
     calorie_burn: {
       type: Number,
       required: true,
