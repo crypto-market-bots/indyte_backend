@@ -17,7 +17,7 @@ const workoutSchema = new mongoose.Schema(
     physical_equipments: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "PhysicalEquipment", // Reference the PhysicalEquipment model
+        ref: "PhysicalEquipment",
       },
     ],
     calorie_burn: {
@@ -32,7 +32,12 @@ const workoutSchema = new mongoose.Schema(
     ],
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "dieitian", // Assuming 'User' is the model name for dietitians
+      ref: "dieitian", 
+      required: true,
+    },
+    updated_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "dieitian", 
       required: true,
     },
   },

@@ -104,9 +104,13 @@ exports.DeleteEquipment = catchAsyncError(async (req, res, next) => {
 exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
   try {
     const { equipment_name } = req.body;
-    const {equipment_image}=req.files
-    const equipmentId = req.params.exerciseId;
+    const equipmentId = req.params.equipmentId;
+    const equipment_image = req?.files?.equipment_image;
     let updatedEquipment;
+     const updateData = {
+       equipment_name,
+       updated_by: req.user._id,
+     };
     if (
       !equipment_name
     ) {
@@ -114,55 +118,46 @@ exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
     }
 
     if(!equipment_image){
-      const updated_by = req.user._id;
       updatedEquipment = await PhysicalEquipment.findByIdAndUpdate(
         equipmentId,
-        {
-          equipment_name,
-          updated_by,
-        },
+        updateData,
         { new: true } // Return the updated document
       );
     }
     else{
       const updated_by = req.user._id;
+
+      const equipment_image_data = await uploadAndPushImage(
+        "images/equipment",
+        equipment_image,
+        "equipment_image",
+        equipment_name
+      );
+
+      if (!equipment_image_data.location) return next(new ErrorHander(data));
+      updateData.equipment_image = equipment_image_data.location;
+      updateData.equipment_image_key = `images/equipment${equipment_image_data.key}`;
+      console.log("req.body.image", updateData);
+
       updatedEquipment = await PhysicalEquipment.findByIdAndUpdate(
         equipmentId,
-        {
-          equipment_name,
-          updated_by,
-        },
+        updateData,
         { new: true }
       );
-        const equipment_image_data = await uploadAndPushImage(
-          "images/equipment",
-          equipment_image,
-          "equipment_image",
-          equipment_name
-        );
-
-        if (!equipment_image_data.location) return next(new ErrorHander(data));
-        newEquipment.equipment_image = equipment_image_data.location;
-        newEquipment.equipment_image_key = `images/equipment${equipment_image_data.key}`;
-        console.log(
-          "req.body.image",
-          equipment_image_data.location,
-          equipment_image_data.key
-        );
     }
 
     
 
     // Find the exercise by ID and update its fields
     
-    if (!updatedExercise) {
+    if (!updatedEquipment) {
       return next(new ErrorHander("Exercise not found", 404));
     }
 
     res.status(200).json({
       success: true,
       message: "Exercise updated successfully",
-      data: updatedExercise,
+      data: updatedEquipment,
     });
   } catch (error) {
     // Handle any error that occurred during the process

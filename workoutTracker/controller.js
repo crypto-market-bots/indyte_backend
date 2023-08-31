@@ -1,8 +1,9 @@
 const moment = require('moment');
 const catchAsyncError = require('../middleware/catchAsyncError');
 const { Workout, workoutRecommendation} = require('./model');
-const { Exercise } = require("../exercises/model"); // Update the path to your exercise model
-const ErrorHander = require("../utils/errorhander"); // Update the path to your error handler
+const { Exercise } = require("../exercises/model"); 
+const PhysicalEquipment  = require("../equipment/model"); 
+const ErrorHander = require("../utils/errorhander"); 
 
 exports.createWorkout = catchAsyncError(async (req, res, next) => {
   try {
@@ -29,26 +30,36 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHander("All fields are required", 400));
     }
 
-    // Assuming exercises is an array of exercise IDs, you can validate them as needed
+    
+    const exerciseIds = exercises; 
+    const physical_equipmentsIds = physical_equipments; 
 
-    // Retrieve the exercises from the database using the provided exercise IDs
-    const exerciseIds = exercises; // Update this based on how exercise IDs are sent
-
+    console.log(" got the ids")
     const validExercises = await Exercise.find({ _id: { $in: exerciseIds } });
 
+    
     if (validExercises.length !== exerciseIds.length) {
       return next(new ErrorHander("Invalid exercise IDs in exercises", 400));
     }
+    
+    const validEquipment = await PhysicalEquipment.find({
+      _id: { $in: physical_equipmentsIds },
+    });
 
-    // Create a new workout
+    if (validEquipment.length !== physical_equipmentsIds.length) {
+      return next(new ErrorHander("Invalid Equipment IDs in Equipments", 400));
+    }
+
+    console.log(" pass through validation");
     const workout = new Workout({
       name,
       description,
       image,
-      physical_equipments,
+      physical_equipments: validEquipment,
       calorie_burn,
       exercises: validExercises,
-      created_by: req.user.id, // Assuming user authentication and req.user contains the user's ID
+      created_by: req.user.id,
+      updated_by: req.user.id,
     });
 
     // Save the workout to the database
@@ -60,7 +71,7 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
       data: savedWorkout,
     });
   } catch (error) {
-    return next(new ErrorHander("An error occurred", 500));
+    return next(new ErrorHander(error.message, 500));
   }
 });
 
