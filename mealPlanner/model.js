@@ -90,6 +90,10 @@ const userMealRecommendationSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    date: {
+      type: Date,
+      required: [true, "Please Specify Date You want to assign"],
+    },
     meal: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Meal',
@@ -108,6 +112,17 @@ const userMealRecommendationSchema = new mongoose.Schema({
       type: Boolean,
       default:false,
     },
+    quantity: {
+      value: {
+          type: Number,
+          required: true,
+      },
+      type: {
+          type: String,
+          enum: ['gm', 'kg', 'ml', 'oz', 'lb', 'other'], // Add more types as needed
+          required: true,
+      },
+  },
     assigned_by: { // dietition 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'dietitian',

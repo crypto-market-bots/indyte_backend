@@ -254,7 +254,7 @@ exports.DietitianUpdation = catchAsyncError(async (req, res, next) => {
     res.status(200).send({
       success: true,
       message: "Dietitian details updated successfully",
-      updatedDietitian, // You can send the updated document as a response
+      updatedDietitian, // You can send the upd document as a response
     });
   } catch (error) {
     return next(new ErrorHander(error.message, 400));

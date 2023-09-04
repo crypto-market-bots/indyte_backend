@@ -5,6 +5,7 @@ const ErrorHander = require("../utils/errorhander");
 const { Meal, UserMealRecommendation } = require("./model");
 const moment = require("moment");
 
+
 exports.allMealsFetch = catchAsyncError(async (req, res, next) => {
   try {
     const meals = await Meal.find();
@@ -16,6 +17,8 @@ exports.allMealsFetch = catchAsyncError(async (req, res, next) => {
     res.status(500).json({ error: "Failed to fetch meals" });
   }
 });
+
+
 
 exports.fetchMealById = catchAsyncError(async (req, res, next) => {
   try {
@@ -30,48 +33,61 @@ exports.fetchMealById = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
 exports.userMealRecommendation = catchAsyncError(async (req, res, next) => {
   // Api for to add meal : dietition
 
   try {
-    const { user_id, meal_id, meal_period } = req.body; 
-    
-    if (
-      !user_id ||
-      !meal_id ||
-      !meal_period
-      ) {
-        return next(new ErrorHander("All fields are required", 400));
-      }
+    const { user_id, meal_id, meal_period, quantity, date } = req.body;
+
+    console.log(req.body)
+
+    if (!user_id || !meal_id || !meal_period || !quantity) {
+      return next(new ErrorHander("All fields are required, including", 400));
+    }
 
     const userMealRecommendation = new UserMealRecommendation({
       user: user_id, // customer
       meal: meal_id,
+      quantity: quantity,
       meal_period: meal_period,
       assigned_by: req.user.id,
+      date: new Date(date)
     });
 
-    const recommendation=await userMealRecommendation.save();
-    res.status(201).json({ success: true, message: "Success",data:recommendation });
+    const recommendation = await userMealRecommendation.save();
+    res.status(201).json({ success: true, message: "Success", data: recommendation });
   } catch (error) {
     res
       .status(500)
-      .json({ error: error});
+      .json({ error: error });
   }
 });
+
 
 exports.userMealRecommendationFetch = catchAsyncError(
   async (req, res, next) => {
     try {
-      if (req.query.meal_id) {
-        const meal = await Meal.findById(req.query.meal_id);
-        res.status(201).json({ success: true, data: meal });
-      } else {
-        const mealLogs = await UserMealRecommendation.find()
-          .populate("user", "name")
-          .populate("meal", "name");
-        res.status(201).json({ success: true, data: mealLogs });
+      const {
+        user_id,
+      } = req.body;
+
+      console.log(req.body)
+
+      if (!user_id) {
+        return next(new ErrorHander("All field are required ", 400));
       }
+
+      const meal_recomadation = await UserMealRecommendation.find({
+        $or: [{ user: user_id }, { assigned_by: req.user.id }],
+      })
+      if (meal_recomadation) {
+        res.status(201).json({ success: true, data: meal_recomadation });
+      }
+      else {
+        res.status(500).json({ success: true, message: "Failed to fetch recommandtion" });
+      }
+
     } catch (error) {
       res
         .status(500)
@@ -80,18 +96,61 @@ exports.userMealRecommendationFetch = catchAsyncError(
   }
 );
 
+
 exports.userMealRecommendationDelete = catchAsyncError(
   async (req, res, next) => {
     try {
-      const meal_recom_id = req.query.meal_recom_id;
-      const meal = await UserMealRecommendation.deleteOne({
+      const meal_recom_id = req.params.Id;
+      const meal_recomadation = await UserMealRecommendation.deleteOne({
         _id: meal_recom_id,
-      });
-      res.status(201).json({ success: true, message: "Success" });
+      }, { new: true });
+
+      if (meal_recommendation.deletedCount === 1) {
+        // The document was deleted successfully
+        return res.status(200).json({ success: true, message: "Deleted Successfully" });
+      }
+      else {
+        return res.status(404).json({ error: "Recommendation not found" });
+      }
+      // Document not found
     } catch (error) {
       res
         .status(500)
         .json({ error: "Failed to delete user meal recommendations" });
+    }
+  }
+);
+
+
+exports.userMealRecommendationUpdate = catchAsyncError(
+  async (req, res, next) => {
+    try {
+
+      const recommandtionId=req.params.Id
+
+      if (!user_id || !meal_id || !meal_period || !quantity) {
+        return next(new ErrorHander("All fields are required, including", 400));
+      }
+
+
+      if (!mealRecommendationId || !updatedFields) {
+        return next(new ErrorHander("Meal recommendation ID and updated fields are required", 400));
+      }
+
+      // Find the existing user meal recommendation by ID
+      const userMealRecommendation = await UserMealRecommendation.findById(recommandtionId);
+
+      if (!userMealRecommendation) {
+        return next(new ErrorHander("Meal recommendation not found", 404));
+      }
+
+      // Update the user meal recommendation with the provided fields
+      Object.assign(userMealRecommendation, updatedFields);
+
+      const updatedRecommendation = await userMealRecommendation.save();
+      res.status(200).json({ success: true, message: "Recommendation updated successfully", data: updatedRecommendation });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   }
 );
@@ -106,37 +165,37 @@ exports.addMeal = catchAsyncError(async (req, res, next) => {
     } = req.body;
 
 
-    const {meal_image}=req.files
+    const { meal_image } = req.files
 
 
- const nutritions = [
-   {
-     type: req.body["nutritions[0][type]"],
-     value: req.body["nutritions[0][value]"],
-   },
-   {
-     type: req.body["nutritions[1][type]"],
-     value: req.body["nutritions[1][value]"],
-   },
- ];
+    const nutritions = [
+      {
+        type: req.body["nutritions[0][type]"],
+        value: req.body["nutritions[0][value]"],
+      },
+      {
+        type: req.body["nutritions[1][type]"],
+        value: req.body["nutritions[1][value]"],
+      },
+    ];
 
- // Process required ingredients data
- const required_ingredients = [
-   {
-     name: req.body["required_ingredients[0][name]"],
-     type: req.body["required_ingredients[0][type]"],
-     quantity: req.body["required_ingredients[0][quantity]"],
-   },
- ];
+    // Process required ingredients data
+    const required_ingredients = [
+      {
+        name: req.body["required_ingredients[0][name]"],
+        type: req.body["required_ingredients[0][type]"],
+        quantity: req.body["required_ingredients[0][quantity]"],
+      },
+    ];
 
- // Process steps data
- const steps = [
-   {
-     title: req.body["steps[0][title]"],
-     description: req.body["steps[0][description]"],
-   },
+    // Process steps data
+    const steps = [
+      {
+        title: req.body["steps[0][title]"],
+        description: req.body["steps[0][description]"],
+      },
 
- ];
+    ];
 
     // Validate the presence of required fields
     console.log(req.body)
@@ -146,7 +205,7 @@ exports.addMeal = catchAsyncError(async (req, res, next) => {
       !description ||
       !meal_image ||
       !nutritions ||
-      !required_ingredients.length 
+      !required_ingredients.length
     ) {
       return next(new ErrorHander("All fields are required", 400));
     }
@@ -154,9 +213,9 @@ exports.addMeal = catchAsyncError(async (req, res, next) => {
 
     const created_by = req.user._id;
 
-    const sameMeal =await Meal.findOne({name:name})
-    if(sameMeal){
-      console.log("The Meal with same name already exist ",sameMeal)
+    const sameMeal = await Meal.findOne({ name: name })
+    if (sameMeal) {
+      console.log("The Meal with same name already exist ", sameMeal)
       return next(new ErrorHander("Meal with same name already exist ", 400));
     }
 
@@ -203,7 +262,6 @@ exports.addMeal = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander(error.message, 500));
   }
 });
-
 
 
 exports.deleteMeal = catchAsyncError(async (req, res, next) => {
