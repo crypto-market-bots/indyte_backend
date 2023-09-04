@@ -95,29 +95,25 @@ const userMealRecommendationSchema = new mongoose.Schema({
         ref: 'Meal',
         required: true,
     },
-    meal_time: {
-        type: Date,
-        required: true,
-    },
     meal_period: {
         type: String,
-        enum: ['LUNCH', 'BREAKFAST', 'DINNER'],
+        enum: ['LUNCH', 'BREAKFAST', 'DINNER','SNACKS'],
         required: true,
     },
     user_picked: {
         type: Boolean,
         default:false,
     },
-    added_by: { // dietition 
+    user_skip: {
+      type: Boolean,
+      default:false,
+    },
+    assigned_by: { // dietition 
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'dietitian',
         required: true,
     },
-    created_time: {
-        type: Date,
-        default: Date.now,
-    },
-});
+},{timestamps:true});
 
 
 

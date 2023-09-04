@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const workoutSchema = new mongoose.Schema(
   {
-    name: {
+    workout_name: {
       type: String,
       required: true,
     },
@@ -10,7 +10,11 @@ const workoutSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    image: {
+    workout_image: {
+      type: String,
+      required: true,
+    },
+    workout_image_key: {
       type: String,
       required: true,
     },

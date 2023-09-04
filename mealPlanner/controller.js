@@ -34,46 +34,29 @@ exports.userMealRecommendation = catchAsyncError(async (req, res, next) => {
   // Api for to add meal : dietition
 
   try {
-    var { user_id, meal_id, meal_time, meal_period } = req.body; // meal_time : DD-MM-YYYY
+    const { user_id, meal_id, meal_period } = req.body; 
+    
+    if (
+      !user_id ||
+      !meal_id ||
+      !meal_period
+      ) {
+        return next(new ErrorHander("All fields are required", 400));
+      }
 
-    if (!meal_id) {
-      const {
-        meal_name,
-        nutritions,
-        description,
-        image_link,
-        required_ingredients,
-        steps,
-      } = req.body;
-      const meal = new Meal({
-        meal_image: image,
-        name: meal_name,
-        nutritions: nutritions,
-        description: description,
-        image: image_link,
-        required_ingredients: required_ingredients,
-        steps: steps,
-        created_by: req.user.id,
-      });
-      const savedMeal = await meal.save();
-      meal_id = savedMeal._id;
-    }
-
-    const meal_time_formatted = moment(meal_time, "DD-MM-YYYY").toDate(); // Date
     const userMealRecommendation = new UserMealRecommendation({
       user: user_id, // customer
       meal: meal_id,
-      meal_time: meal_time_formatted,
       meal_period: meal_period,
-      added_by: req.user.id,
+      assigned_by: req.user.id,
     });
 
-    await userMealRecommendation.save();
-    res.status(201).json({ success: true, message: "Success" });
+    const recommendation=await userMealRecommendation.save();
+    res.status(201).json({ success: true, message: "Success",data:recommendation });
   } catch (error) {
     res
       .status(500)
-      .json({ error: "Failed to create user meal recommendation" });
+      .json({ error: error});
   }
 });
 

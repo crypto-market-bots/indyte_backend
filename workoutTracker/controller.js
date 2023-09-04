@@ -1,33 +1,47 @@
 const moment = require('moment');
 const catchAsyncError = require('../middleware/catchAsyncError');
 const { Workout, workoutRecommendation} = require('./model');
-const { Exercise } = require("../exercises/model"); 
+const { Exercise } = require("../exercises/model");
+const { uploadAndPushImage } = require("../Common/uploadToS3");
 const PhysicalEquipment  = require("../equipment/model"); 
 const ErrorHander = require("../utils/errorhander"); 
 
 exports.createWorkout = catchAsyncError(async (req, res, next) => {
   try {
     const {
-      name,
+      workout_name,
       description,
-      image,
-      physical_equipments,
+      'physical_equipments[]': physical_equipments,
+      // physical_equipments,
       calorie_burn,
-      exercises,
+      'exercises[]': exercises, //this was use to send array from postman (@Mohit)
     } = req.body;
 
 
+    const {workout_image}  =req.files
     console.log(req.body)
+    console.log(physical_equipments,"sssssss")
     // Validate the presence of required fields
     if (
-      !name ||
+      !workout_name ||
       !description ||
-      !image ||
+      !workout_image ||
       !physical_equipments ||
       !calorie_burn ||
       !exercises
     ) {
       return next(new ErrorHander("All fields are required", 400));
+    }
+
+
+    const sameWorkout = await Workout.findOne({
+      name: workout_name,
+    });
+    if (sameWorkout) {
+      console.log("workout With same name already exist ", sameWorkout);
+      return next(
+        new ErrorHander("workout with same name already exist ", 400)
+      );
     }
 
     
@@ -52,15 +66,31 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
 
     console.log(" pass through validation");
     const workout = new Workout({
-      name,
+      workout_name,
       description,
-      image,
-      physical_equipments: validEquipment,
+      physical_equipments:validEquipment,
       calorie_burn,
-      exercises: validExercises,
+      exercises:validExercises,
       created_by: req.user.id,
       updated_by: req.user.id,
     });
+
+    const workout_image_data = await uploadAndPushImage(
+      "images/workout",
+      workout_image,
+      "workout_image",
+      workout_name
+    );
+
+    if (!workout_image_data.location) return next(new ErrorHander(data));
+    workout.workout_image = workout_image_data.location;
+    workout.workout_image_key = `images/workout${workout_image_data.key}`;
+    console.log(
+      "req.body.image",
+      workout_image_data.location,
+      workout_image_data.key
+    );
+
 
     // Save the workout to the database
     const savedWorkout = await workout.save();
@@ -74,6 +104,8 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander(error.message, 500));
   }
 });
+
+
 
 exports.deleteWorkout = catchAsyncError(async (req, res, next) => {
   try {
@@ -98,52 +130,81 @@ exports.deleteWorkout = catchAsyncError(async (req, res, next) => {
 
 exports.updateWorkout = catchAsyncError(async (req, res, next) => {
   try {
+    const {
+      workout_name,
+      description,
+      'physical_equipments[]': physical_equipments,
+      // physical_equipments,
+      calorie_burn,
+      'exercises[]': exercises, //this was use to send array from postman (@Mohit)
+    } = req.body;
 
     const workoutId = req.params.workoutId;
-    console.log("this is workout id", workoutId);
-    const updatedData = req.body;
 
-    // Validate the presence of required fields
+    console.log("Workout started ",workoutId)
+
+    const workout_image = req?.files?.workout_image;
+    let updateWorkout;
     if (
-      !updatedData.name ||
-      !updatedData.physical_equipments ||
-      !updatedData.calorie_burn ||
-      !updatedData.description||
-      !updatedData.image||
-      !updatedData.exercises
-    ) {
-      return next(new ErrorHander("All fields are required", 400));
-    }
-
-    // Assuming exercises is an array of exercise IDs, you can validate them as needed
-    if (updatedData.exercises) {
-      const exerciseIds = updatedData.exercises;
-
-      const validExercises = await Exercise.find({ _id: { $in: exerciseIds } });
-
-      if (validExercises.length !== exerciseIds.length) {
-        return next(new ErrorHander("Invalid exercise IDs in exercises", 400));
+      !workout_name ||
+      !description ||
+      !physical_equipments ||
+      !calorie_burn ||
+      !exercises
+      ) {
+        return next(new ErrorHander("All fields are required", 400));
       }
+
+      const updateData = {
+        workout_name,
+       description,
+       physical_equipments,
+       calorie_burn,
+       exercises,
+       updated_by: req.user._id,
+      };
+
+    if(!workout_image){
+      updateWorkout = await Workout.findByIdAndUpdate(
+        workoutId,
+        updateData,
+        { new: true } // Return the updated document
+      );
+    }
+    else{
+      const workout_image_data = await uploadAndPushImage(
+        "images/workout",
+        workout_image,
+        "workout_image",
+        workout_name
+      );
+
+      if (!workout_image_data.location) return next(new ErrorHander(data));
+      updateData.workout_image = workout_image_data.location;
+      updateData.workout_image_key = `images/workout${workout_image_data.key}`;
+      console.log("req.body.image", updateData);
+
+      updateWorkout = await Workout.findByIdAndUpdate(
+        workoutId,
+        updateData,
+        { new: true }
+      );
     }
 
-    // Find the workout by ID and update its fields
-    const updatedWorkout = await Workout.findByIdAndUpdate(
-      workoutId,
-      updatedData,
-      { new: true }
-    );
-
-    if (!updatedWorkout) {
-      return next(new ErrorHander("Workout not found", 404));
+    
+    
+    if (!updateWorkout) {
+      return next(new ErrorHander("workout not found", 404));
     }
 
     res.status(200).json({
       success: true,
-      message: "Workout updated successfully",
-      data: updatedWorkout,
+      message: "workout updated successfully",
+      data: updateWorkout,
     });
   } catch (error) {
-    return next(new ErrorHander("An error occurred", 500));
+    // Handle any error that occurred during the process
+    return next(new ErrorHander(error.message, 500));
   }
 });
 
