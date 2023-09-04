@@ -1,73 +1,60 @@
 const mongoose = require('mongoose');
 
-const exerciseSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  difficulty: {
-    type: String,
-    required: true,
-  },
-  burn_calories: {
-    type: Number,
-    required: true,
-  },
-  repetition: {
-    type: Number,
-    required: true,
-  },
-  steps: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
-  },
-  video_link: {
-    type: String,
-  },
-  created_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  set_number: {
-    type: Number,
-    default:1
-  },
-  created_time: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-const workoutSchema = new mongoose.Schema({
-    name: {
+const workoutSchema = new mongoose.Schema(
+  {
+    workout_name: {
       type: String,
       required: true,
     },
-    difficulty: {
+    description: {
       type: String,
       required: true,
     },
-    physical_equipments : { // {"Barbell": {image_link: "s3://"}}
-        type: mongoose.Schema.Types.Mixed,
-        required: true,
+    workout_image: {
+      type: String,
+      required: true,
+    },
+    workout_image_key: {
+      type: String,
+      required: true,
+    },
+    physical_equipments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "PhysicalEquipment",
+      },
+    ],
+    calorie_burn: {
+      type: Number,
+      required: true,
     },
     exercises: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Exercise',
-        }
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Exercise",
+      },
     ],
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "dieitian", 
       required: true,
     },
-    created_time: {
-      type: Date,
-      default: Date.now,
+    updated_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "dieitian", 
+      required: true,
     },
-});
+  },
+  {
+    timestamps: true, // Adds created_at and updated_at fields
+  }
+);
+
+
+
+//4
+//2 y,z
+//2,1,2
 
 const workoutRecommendationSchema = new mongoose.Schema({
   user: {
@@ -96,12 +83,10 @@ const workoutRecommendationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-
   is_completed : {
     type: Boolean,
     default: false
   },
-
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -110,12 +95,14 @@ const workoutRecommendationSchema = new mongoose.Schema({
 });
 
 
+//1,2,3,4
+//2,4
+
 
 // -> workout/ api -> excersise- > set_1, {set: {"1" : [execrise1,exe], "2", : [excersie2] }
 const workoutRecommendation = mongoose.model('WorkOutRecommendation', workoutRecommendationSchema);
 const Workout = mongoose.model('WorkOut', workoutSchema);
-const Exercise = mongoose.model('Exercise', exerciseSchema);
-module.exports  = {Exercise, Workout,workoutRecommendation}
+module.exports  = { Workout,workoutRecommendation}
 
 
 

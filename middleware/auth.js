@@ -1,6 +1,7 @@
 const ErrorHander = require("../utils/errorhander");
 const catchAsyncError = require("./catchAsyncError");
 const jwt = require("jsonwebtoken");
+const dietitian = require("../dietitian/model");
 const User = require("../users/model");
 // const Seller = require("../models/sellerModel");
 
@@ -24,9 +25,10 @@ exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
   next();
 });
 
-exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
-  
+exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
+  console.log("Is auntheticated called")
   const bearerHeader = req.headers["authorization"];
+  console.log(role,"this is role ")
   if (typeof bearerHeader !== "undefined") {
     const bearer = bearerHeader.split(" ");
     const token = bearer[1];
@@ -35,10 +37,16 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
         return next(new ErrorHander("Invalid token", 401));
       } else {
         //decodedData.userID);
-        req.user = await User.findById(decodedData.userID);
+        if (role=="app") {
+          req.user = await User.findById(decodedData.userID);
+        } else {
+          req.user = await dietitian.findById(decodedData.userID);
+        }
+          
+        // req.user = await dietitian.findById(decodedData.userID);
         if (!req.user) {
           return next(
-            new ErrorHander("You are not a Valid User or seller", 400)
+            new ErrorHander("You are not a Valid User ", 400)
           );
         }
         //await Seller.findById(decodedData.userID));
@@ -63,16 +71,15 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
 });
 
 exports.authorizedRoles = (...roles) => {
+  console.log("authorized also called")
   return (req, res, next) => {
       if (!roles.includes(req.user.type)) {
         return next(
           new ErrorHander(
             `Role ${req.user.type} is not allowed to access this resource`,
-            
           )
         );
       }
       next();
     }
-
   }

@@ -1,134 +1,229 @@
 const moment = require('moment');
 const catchAsyncError = require('../middleware/catchAsyncError');
-const {Exercise, Workout, workoutRecommendation} = require('./model');
+const { Workout, workoutRecommendation} = require('./model');
+const { Exercise } = require("../exercises/model");
+const { uploadAndPushImage } = require("../Common/uploadToS3");
+const PhysicalEquipment  = require("../equipment/model"); 
+const ErrorHander = require("../utils/errorhander"); 
+
+exports.createWorkout = catchAsyncError(async (req, res, next) => {
+  try {
+    const {
+      workout_name,
+      description,
+      'physical_equipments[]': physical_equipments,
+      // physical_equipments,
+      calorie_burn,
+      'exercises[]': exercises, //this was use to send array from postman (@Mohit)
+    } = req.body;
 
 
-exports.exercise = catchAsyncError(async(req,res, next) => {  // post method for dietion and owner for to crate the excersise
-    // Create Exercise Record
-    try {
-        const {name, difficulty, burn_calories, repetition, steps, video_link} = req.body;
-        const exercise = new Exercise({
-            name,
-            difficulty,
-            burn_calories,
-            repetition,
-            steps,
-            video_link,
-            created_by:req.user.id
-        });
-        const savedExcersie =  await exercise.save();
-        
-        res.status(201).json({
-            success: true,
-            message: "Success",
-            exercise_id : savedExcersie._id,
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred' });
-    }    
-});
-
-exports.workout = catchAsyncError(async (req, res, next) => {
-    try {
-        let { name, difficulty, physical_equipments, sets } = req.body;
-
-        // Create an array to store the exercises
-        const exercises = [];
-        sets = JSON.parse(sets)
-        // Loop through each set in the sets object
-        for (const setNumber in sets) {
-            if (Object.hasOwnProperty.call(sets, setNumber)) {
-                const set = sets[setNumber];
-                // Loop through each exercise in the set
-                for (const exerciseNumber in set) {
-                    if (Object.hasOwnProperty.call(set, exerciseNumber)) {
-                        const exerciseId = set[exerciseNumber];
-                        // Retrieve the exercise from the database using the provided exerciseId
-                        var exercise = await Exercise.findById(exerciseId);
-                        // Add the exercise to the exercises array
-                        if (exercise) {
-                            exercise.set_number = setNumber;
-                            await exercise.save()
-                            exercises.push(exercise);
-                        }
-                        else {
-                            res.status(500).json({ message: 'sets ids are invalid' });
-                        }
-                    }
-                }
-            }
-        }
-
-        // Create a new workout
-        const workout = new Workout({
-            name,
-            difficulty,
-            physical_equipments,
-            exercises,
-            created_by: req.user.id
-        });
-
-        // Save the workout to the database
-        await workout.save();
-        res.status(201).json(workout);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred' });
+    const {workout_image}  =req.files
+    console.log(req.body)
+    console.log(physical_equipments,"sssssss")
+    // Validate the presence of required fields
+    if (
+      !workout_name ||
+      !description ||
+      !workout_image ||
+      !physical_equipments ||
+      !calorie_burn ||
+      !exercises
+    ) {
+      return next(new ErrorHander("All fields are required", 400));
     }
-});
 
-exports.workoutUpdate = catchAsyncError(async(req,res, next) => {  
-    try {
-        const workoutId = req.params.id;
-        const { name, difficulty, physical_equipments, sets } = req.body;
 
-        // Find the workout by ID
-        var workout = await Workout.findById(workoutId);
-
-        if (!workout) {
-        return res.status(404).json({ error: 'Workout not found' });
-        }
-
-        // Update the workout fields
-        if (name){
-            workout.name = name;
-        }
-        if (difficulty){
-            workout.difficulty = difficulty;
-        }
-        if (physical_equipments){
-            workout.physical_equipments = physical_equipments;
-        }
-
-        const update_add_sets = sets.update;
-        const delete_sets = sets.delete;
-
-        if (update_add_sets) {
-            for (let i = 0; i < update_add_sets.length; i++) {
-                const exercise_obj= update_add_sets[i];
-                const exercise_id = Object.keys(exercise_obj)[0];
-                const set_number = exerciseObj[exercise_id];
-                var exercise = await Exercise.findById(exerciseId);
-                exercise.set_number = set_number;
-                exercise.save()
-                workout.exercise.push(exercise_id);
-              }              
-        }
-        if (delete_sets) {
-            for (let i = 0; i < delete_sets.length; i++) {
-                const exercise_id = delete_sets[i];
-                workout.exercise.pull(exerciseId);
-            }
-        }
-        await workout.save();
-        res.status(201).json({ success: true, message: "Success",});
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed workout update !' });
+    const sameWorkout = await Workout.findOne({
+      name: workout_name,
+    });
+    if (sameWorkout) {
+      console.log("workout With same name already exist ", sameWorkout);
+      return next(
+        new ErrorHander("workout with same name already exist ", 400)
+      );
     }
+
+    
+    const exerciseIds = exercises; 
+    const physical_equipmentsIds = physical_equipments; 
+
+    console.log(" got the ids")
+    const validExercises = await Exercise.find({ _id: { $in: exerciseIds } });
+
+    
+    if (validExercises.length !== exerciseIds.length) {
+      return next(new ErrorHander("Invalid exercise IDs in exercises", 400));
+    }
+    
+    const validEquipment = await PhysicalEquipment.find({
+      _id: { $in: physical_equipmentsIds },
+    });
+
+    if (validEquipment.length !== physical_equipmentsIds.length) {
+      return next(new ErrorHander("Invalid Equipment IDs in Equipments", 400));
+    }
+
+    console.log(" pass through validation");
+    const workout = new Workout({
+      workout_name,
+      description,
+      physical_equipments:validEquipment,
+      calorie_burn,
+      exercises:validExercises,
+      created_by: req.user.id,
+      updated_by: req.user.id,
+    });
+
+    const workout_image_data = await uploadAndPushImage(
+      "images/workout",
+      workout_image,
+      "workout_image",
+      workout_name
+    );
+
+    if (!workout_image_data.location) return next(new ErrorHander(data));
+    workout.workout_image = workout_image_data.location;
+    workout.workout_image_key = `images/workout${workout_image_data.key}`;
+    console.log(
+      "req.body.image",
+      workout_image_data.location,
+      workout_image_data.key
+    );
+
+
+    // Save the workout to the database
+    const savedWorkout = await workout.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Workout created successfully",
+      data: savedWorkout,
+    });
+  } catch (error) {
+    return next(new ErrorHander(error.message, 500));
+  }
 });
+
+
+
+exports.deleteWorkout = catchAsyncError(async (req, res, next) => {
+  try {
+    const workoutId = req.params.workoutId;
+
+    // Find the workout by ID and delete it
+    const deletedWorkout = await Workout.findByIdAndDelete(workoutId);
+
+    if (!deletedWorkout) {
+      return next(new ErrorHandler("Workout not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Workout deleted successfully",
+    });
+  } catch (error) {
+    return next(new ErrorHandler("An error occurred", 500));
+  }
+});
+
+
+exports.updateWorkout = catchAsyncError(async (req, res, next) => {
+  try {
+    const {
+      workout_name,
+      description,
+      'physical_equipments[]': physical_equipments,
+      // physical_equipments,
+      calorie_burn,
+      'exercises[]': exercises, //this was use to send array from postman (@Mohit)
+    } = req.body;
+
+    const workoutId = req.params.workoutId;
+
+    console.log("Workout started ",workoutId)
+
+    const workout_image = req?.files?.workout_image;
+    let updateWorkout;
+    if (
+      !workout_name ||
+      !description ||
+      !physical_equipments ||
+      !calorie_burn ||
+      !exercises
+      ) {
+        return next(new ErrorHander("All fields are required", 400));
+      }
+
+      const updateData = {
+        workout_name,
+       description,
+       physical_equipments,
+       calorie_burn,
+       exercises,
+       updated_by: req.user._id,
+      };
+
+    if(!workout_image){
+      updateWorkout = await Workout.findByIdAndUpdate(
+        workoutId,
+        updateData,
+        { new: true } // Return the updated document
+      );
+    }
+    else{
+      const workout_image_data = await uploadAndPushImage(
+        "images/workout",
+        workout_image,
+        "workout_image",
+        workout_name
+      );
+
+      if (!workout_image_data.location) return next(new ErrorHander(data));
+      updateData.workout_image = workout_image_data.location;
+      updateData.workout_image_key = `images/workout${workout_image_data.key}`;
+      console.log("req.body.image", updateData);
+
+      updateWorkout = await Workout.findByIdAndUpdate(
+        workoutId,
+        updateData,
+        { new: true }
+      );
+    }
+
+    
+    
+    if (!updateWorkout) {
+      return next(new ErrorHander("workout not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "workout updated successfully",
+      data: updateWorkout,
+    });
+  } catch (error) {
+    // Handle any error that occurred during the process
+    return next(new ErrorHander(error.message, 500));
+  }
+});
+
+
+exports.fetchWorkouts = catchAsyncError(async (req, res, next) => {
+  try {
+    // Fetch all workouts from the database
+    const allWorkouts = await Workout.find();
+
+    res.status(200).json({
+      success: true,
+      message: "All workouts fetched successfully",
+      data: allWorkouts,
+    });
+  } catch (error) {
+    return next(new ErrorHander("An error occurred", 500));
+  }
+});
+
 
 exports.workoutRecommendation = catchAsyncError(async(req,res, next) => {  
     const { user_id, workout_id, difficulty, schedule_time } = req.body;
@@ -200,7 +295,7 @@ exports.fetchExercise = catchAsyncError(async(req,res, next) => {   // api for c
 
 
 exports.fetchWorkout = catchAsyncError(async(req,res, next) => {   // api for customers and meal planner
-    const workout_id = req.query.workout_id;
+    const workout_id = req.query.workoutId;
 
     if (workout_id) {
       Workout.findById(workout_id)
@@ -219,7 +314,7 @@ exports.fetchWorkout = catchAsyncError(async(req,res, next) => {   // api for cu
             res.status(201).json({ success: true, message: workouts});
         })
         .catch((error) => {
-          res.status(500).json({ error: 'Failed to fetch workouts.' });
+          res.status(500).json({ error: 'Failed to fetch workout' });
         });
     }
 });
