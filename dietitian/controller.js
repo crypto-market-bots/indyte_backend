@@ -1,8 +1,8 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
-const User  = require("../users/model");
+const User = require("../users/model");
 const dietitian = require("../dietitian/model");
-const {uploadAndPushImage} = require("../Common/uploadToS3");
+const { uploadAndPushImage } = require("../Common/uploadToS3");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
@@ -10,35 +10,27 @@ const AWS = require("aws-sdk");
 const fs = require("fs");
 AWS.config.logger = console;
 
-
 exports.assignDietitian = catchAsyncError(async (req, res, next) => {
-  console.log("the assign dietitian is also ")
-      const {
-        user_id,
-        dietitian_id,
-      } = req.body;
+  console.log("the assign dietitian is also ");
+  const { user_id, dietitian_id } = req.body;
 
-      if (
-        !user_id ||
-        !dietitian_id 
-      ) {
-        return next(new ErrorHander("All fields are required", 400));
-      }
-      const user = await User.findOneAndUpdate(
-        { _id: user_id }, // Filter for finding the user
-        { $set: { dietitian: dietitian_id } }, // Update the "dietitian" parameter
-        { new: true } // Return the updated document
-      );
-      if (user) {
-        console.log(user)
-        res.status(200).send({
-          success: true,
-          message: "Updated Scuessfully",
-          user:user
-        });
-      }
+  if (!user_id || !dietitian_id) {
+    return next(new ErrorHander("All fields are required", 400));
+  }
+  const user = await User.findOneAndUpdate(
+    { _id: user_id }, // Filter for finding the user
+    { $set: { dietitian: dietitian_id } }, // Update the "dietitian" parameter
+    { new: true } // Return the updated document
+  );
+  if (user) {
+    console.log(user);
+    res.status(200).send({
+      success: true,
+      message: "Updated Scuessfully",
+      user: user,
+    });
+  }
 });
-
 
 exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
   const {
@@ -90,8 +82,7 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     country: req.body["permanent_address[country]"],
   };
 
-
-  const { profile_photo,id_card_photo } = req.files;
+  const { profile_photo, id_card_photo } = req.files;
 
   if (
     !email ||
@@ -113,18 +104,14 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     !permanent_address ||
     !profile_photo ||
     !experience ||
-    !id_card_photo||
+    !id_card_photo ||
     !past_work_details
   ) {
     return next(new ErrorHander("All fields are required", 400));
   }
 
-
-  
-
   try {
-const normalizedEmail = email.trim().toLowerCase();
-
+    const normalizedEmail = email.trim().toLowerCase();
 
     console.log("email", email, "phone is phone", phone);
     const existingDietitian = await dietitian.findOne({
@@ -159,7 +146,6 @@ const normalizedEmail = email.trim().toLowerCase();
     // if (!data.location) {
     //   return next(new ErrorHander(data));
     // }
-      
 
     const newDietitian = new dietitian({
       email,
@@ -187,36 +173,33 @@ const normalizedEmail = email.trim().toLowerCase();
       // profile_image_key: data.key,
     });
 
-const profile_picture_data = await uploadAndPushImage(
-  "dietitian/profile",
-  profile_photo,
-  "profile_image",
-  email
-);
+    const profile_picture_data = await uploadAndPushImage(
+      "dietitian/profile",
+      profile_photo,
+      "profile_image",
+      email
+    );
 
+    if (!profile_picture_data.location) return next(new ErrorHander(data));
+    newDietitian.profile_photo = profile_picture_data.location;
+    newDietitian.profile_photo_key = profile_picture_data.key;
+    console.log(
+      "req.body.image",
+      profile_picture_data.location,
+      profile_picture_data.key
+    );
 
-if (!profile_picture_data.location) return next(new ErrorHander(data));
-newDietitian.profile_photo = profile_picture_data.location;
-newDietitian.profile_photo_key = profile_picture_data.key;
-console.log(
-  "req.body.image",
-  profile_picture_data.location,
-  profile_picture_data.key
-);
+    const id_card_data = await uploadAndPushImage(
+      "dietitian/document",
+      id_card_photo,
+      "profile_image",
+      email
+    );
 
-const id_card_data = await uploadAndPushImage(
-  "dietitian/document",
-  id_card_photo,
-  "profile_image",
-  email
-);
-
-
-if (!id_card_data.location) return next(new ErrorHander(data));
-newDietitian.id_card_photo = id_card_data.location;
-newDietitian.id_card_photo_key = id_card_data.key;
-console.log("req.body.image", id_card_data.location, id_card_data.key);
-
+    if (!id_card_data.location) return next(new ErrorHander(data));
+    newDietitian.id_card_photo = id_card_data.location;
+    newDietitian.id_card_photo_key = id_card_data.key;
+    console.log("req.body.image", id_card_data.location, id_card_data.key);
 
     await newDietitian.save();
 
@@ -228,8 +211,6 @@ console.log("req.body.image", id_card_data.location, id_card_data.key);
     return next(new ErrorHander(error.message, 400));
   }
 });
-
-
 
 exports.DietitianUpdation = catchAsyncError(async (req, res, next) => {
   const dietitianId = req.params.id; // Assuming you get the dietitian ID from the request parameters
@@ -261,8 +242,6 @@ exports.DietitianUpdation = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
-
 exports.fetchUser = catchAsyncError(async (req, res, next) => {
   const type = req.query.type;
   const mode = req.user.type;
@@ -273,20 +252,14 @@ exports.fetchUser = catchAsyncError(async (req, res, next) => {
       res.status(500).json({ success: false, message: "invalid Type" });
     } else {
       if (type == "dietitian" && mode == "admin") {
-        console.log("it Come here")
+        console.log("it Come here");
         const data = await dietitian.find();
         res.status(201).json({
           success: true,
           data: data,
         });
-      } else if (type == "user" && mode == "admin") {
-        const data = await User.find();
-        res.status(201).json({
-          success: true,
-          data: data,
-        });
-      } else if (type == "user" && mode == "dietitian") {
-        const data = await User.find();
+      } else if (type == "user") {
+        const data = await User.find({ type: "user" });
         res.status(201).json({
           success: true,
           data: data,
@@ -303,37 +276,37 @@ exports.fetchUser = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
 exports.fetchUserDetail = catchAsyncError(async (req, res, next) => {
- const type = req.query.type;
- const mode = req.user.type;
- const { id } = req.params;
- console.log(mode);
- try {
-   if (!type || !id ||(type != "dietitian" && type != "user")) {
-     res.status(500).json({ success: false, message: "Incorrect details" });
-   } else {
-     if (type == "dietitian") {
-       const data = await dietitian.findOne({ _id: id });
-       res.status(201).json({
-         success: true,
-         data: data,
-       });
-     } else if (type == "user") {
-       const data = await User.find({ _id: id }).populate(
-         "dietitian",
-         "first_name last_name"
-       );
-       res.status(201).json({
-         success: true,
-         data: data,
-       });
-     }  
-   }
- } catch (error) {
-   res.status(500).json({ success: false, message: "failed to fetch user details" });
- }
+  const type = req.query.type;
+  const mode = req.user.type;
+  const { id } = req.params;
+  console.log(mode);
+  try {
+    if (!type || !id || (type != "dietitian" && type != "user")) {
+      res.status(500).json({ success: false, message: "Incorrect details" });
+    } else {
+      if (type == "dietitian") {
+        const data = await dietitian.findOne({ _id: id });
+        res.status(201).json({
+          success: true,
+          data: data,
+        });
+      } else if (type == "user") {
+        const data = await User.find({ _id: id }).populate(
+          "dietitian",
+          "first_name last_name"
+        );
+        res.status(201).json({
+          success: true,
+          data: data,
+        });
+      }
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "failed to fetch user details" });
+  }
 });
-
 
 // exports.assignDietitian = catchAsyncError(async (req, res, next) => {});
