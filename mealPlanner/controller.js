@@ -160,46 +160,19 @@ exports.userMealRecommendationUpdate = catchAsyncError(
 exports.addMeal = catchAsyncError(async (req, res, next) => {
   try {
     const { name, description, ytlink1 } = req.body;
-
     const { meal_image } = req.files;
-
-    const nutritions = [
-      {
-        type: req.body["nutritions[0][type]"],
-        value: req.body["nutritions[0][value]"],
-      },
-      {
-        type: req.body["nutritions[1][type]"],
-        value: req.body["nutritions[1][value]"],
-      },
-    ];
-
-    // Process required ingredients data
-    const required_ingredients = [
-      {
-        name: req.body["required_ingredients[0][name]"],
-        type: req.body["required_ingredients[0][type]"],
-        quantity: req.body["required_ingredients[0][quantity]"],
-      },
-    ];
-
-    // Process steps data
-    const steps = [
-      {
-        title: req.body["steps[0][title]"],
-        description: req.body["steps[0][description]"],
-      },
-    ];
-
-    // Validate the presence of required fields
-    console.log(req.body);
+    const formattedNutrition = JSON.parse(req.body.nutritions);
+    const formatteRequiredIngredients = JSON.parse(
+      req.body.required_ingredients
+    );
+    const formattedSteps = JSON.parse(req.body.steps);
 
     if (
       !name ||
       !description ||
       !meal_image ||
-      !nutritions ||
-      !required_ingredients.length
+      !formattedNutrition ||
+      !formatteRequiredIngredients
     ) {
       return next(new ErrorHander("All fields are required", 400));
     }
@@ -214,12 +187,12 @@ exports.addMeal = catchAsyncError(async (req, res, next) => {
 
     const newMeal = new Meal({
       name,
-      nutritions,
+      nutritions: formattedNutrition,
       description,
       ytlink1,
-      required_ingredients,
+      required_ingredients: formatteRequiredIngredients,
       created_by,
-      steps, // Include the steps array
+      steps: formattedSteps, // Include the steps array
     });
 
     const meal_image_data = await uploadAndPushImage(
@@ -293,14 +266,20 @@ exports.updateMeal = catchAsyncError(async (req, res, next) => {
       steps,
     } = req.body;
 
+    const formattedNutrition = JSON.parse(req.body.nutritions);
+    const formatteRequiredIngredients = JSON.parse(
+      req.body.required_ingredients
+    );
+    const formattedSteps = JSON.parse(req.body.steps);
+
     // Validate the presence of required fields
     if (
       !name ||
       !description ||
       !image ||
-      !nutritions ||
-      !required_ingredients ||
-      !steps
+      !formattedNutrition ||
+      !formatteRequiredIngredients ||
+      !formattedSteps
     ) {
       return next(new ErrorHander("All fields are required", 400));
     }
@@ -313,12 +292,12 @@ exports.updateMeal = catchAsyncError(async (req, res, next) => {
       req.params.mealId,
       {
         name,
-        nutritions,
+        nutritions: formattedNutrition,
         description,
         ytlink1,
         image,
-        required_ingredients,
-        steps,
+        required_ingredients: formatteRequiredIngredients,
+        steps: formattedSteps,
         updated_by,
       },
       { new: true } // Return the updated document
