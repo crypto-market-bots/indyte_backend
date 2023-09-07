@@ -1,6 +1,4 @@
-const mongoose = require('mongoose');
-
-
+const mongoose = require("mongoose");
 
 const mealSchema = new mongoose.Schema({
   name: {
@@ -83,57 +81,61 @@ const mealSchema = new mongoose.Schema({
   },
 });
 
-
-const userMealRecommendationSchema = new mongoose.Schema({
+const userMealRecommendationSchema = new mongoose.Schema(
+  {
     user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     date: {
       type: Date,
       required: [true, "Please Specify Date You want to assign"],
     },
     meal: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Meal',
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Meal",
+      required: true,
     },
     meal_period: {
-        type: String,
-        enum: ['LUNCH', 'BREAKFAST', 'DINNER','SNACKS'],
-        required: true,
+      type: String,
+      enum: ["LUNCH", "BREAKFAST", "DINNER", "SNACKS"],
+      required: true,
     },
     user_picked: {
-        type: Boolean,
-        default:false,
+      type: Boolean,
+      default: false,
     },
     user_skip: {
       type: Boolean,
-      default:false,
+      default: false,
     },
     quantity: {
       value: {
-          type: Number,
-          required: true,
+        type: Number,
+        required: true,
       },
       type: {
-          type: String,
-          enum: ['gm', 'kg', 'ml', 'oz', 'lb', 'other'], // Add more types as needed
-          required: true,
-      },
-  },
-    assigned_by: { // dietition 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'dietitian',
+        type: String,
+        enum: ["gm", "kg", "ml", "oz", "lb", "other"], // Add more types as needed
         required: true,
+      },
     },
-},{timestamps:true});
+    assigned_by: {
+      // dietition
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "dietitian",
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
+const UserMealRecommendation = mongoose.model(
+  "UserMealRecommendation",
+  userMealRecommendationSchema
+);
+const Meal = mongoose.model("Meal", mealSchema);
 
-
-const UserMealRecommendation = mongoose.model('UserMealRecommendation', userMealRecommendationSchema);
-const Meal = mongoose.model('Meal', mealSchema);
-
-module.exports = {Meal, UserMealRecommendation};
+module.exports = { Meal, UserMealRecommendation };
 // module.exports = UserMealRecommendation;
