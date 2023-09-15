@@ -18,7 +18,9 @@ router.route("/login").post(login);
 // router.route("/login-admin").post(loginAdmin);
 router.route("/update-user-profile").put(isAuthenticated, updateUserProfile);
 
-router.route("/get-user-detail").get(isAuthenticated("web"), getUser);
+router.route("/get-user-detail").get(isAuthenticated("app"), getUser);
+
+router.route("/get-detail").get(isAuthenticated("web"), getUser);
 
 router.route("/delete-s3-image/:key").get(deleteS3Image);
 
