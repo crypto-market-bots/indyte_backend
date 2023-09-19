@@ -79,4 +79,11 @@ router
     fetchMealById
   );
 
+  router
+  .route("/get-meal/:id")
+  .get(
+    isAuthenticated("app"),
+    fetchMealById
+  );
+
 module.exports = router;

@@ -37,7 +37,7 @@ exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
         return next(new ErrorHander("Invalid token", 401));
       } else {
         //decodedData.userID);
-        if (role=="app" ) {
+        if (role=="app") {
           req.user = await User.findById(decodedData.userID);
         } else {
           req.user = await dietitian.findById(decodedData.userID);
