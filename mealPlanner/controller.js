@@ -60,6 +60,20 @@ exports.userMealRecommendation = catchAsyncError(async (req, res, next) => {
   }
 });
 
+exports.userMealRecommendationFetchApp = catchAsyncError(async (req, res, next) => {
+  // Api for to add meal : dietition
+  try {
+    const { assignedId } = req.params;
+    const mealsRecommdation = await UserMealRecommendation.findById(assignedId).populate("meal");
+    res.status(201).json({
+      success: true,
+      data: mealsRecommdation,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch meals recomdation ",error });
+  }
+});
+
 exports.userMealRecommendationFetch = catchAsyncError(
   async (req, res, next) => {
     try {

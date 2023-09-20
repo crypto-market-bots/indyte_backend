@@ -38,6 +38,7 @@ exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
       } else {
         //decodedData.userID);
         if (role=="app") {
+          console.log("get into role")
           req.user = await User.findById(decodedData.userID);
         } else {
           req.user = await dietitian.findById(decodedData.userID);
