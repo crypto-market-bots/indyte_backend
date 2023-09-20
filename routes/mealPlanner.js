@@ -4,6 +4,7 @@ const {
   allMealsFetch,
   userMealRecommendation,
   userMealRecommendationFetch,
+  userMealRecommendationFetchApp,
   userMealRecommendationDelete,
   userMealRecommendationUpdate,
   addMeal,
@@ -45,6 +46,16 @@ router
   );
 
 //These are api for handling meal Template
+
+
+router
+  .route("/assignedMeal/:assignedId")
+  .get(
+    isAuthenticated("app"),
+    userMealRecommendationFetchApp
+  );
+
+
 
 router
   .route("/add-meal")
