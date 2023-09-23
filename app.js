@@ -17,9 +17,9 @@ app.use(
   })
 );
 var cors = require("cors");
+app.use(cors());
 const { application } = require("express");
 
-app.use(cors());
 app.get("/health", (req, res, next) => {
   res.send("OK");
 });
