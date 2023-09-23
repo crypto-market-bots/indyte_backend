@@ -388,7 +388,7 @@ exports.forgetPassword = catchAsyncError(async (req, res, next) => {
 exports.deleteS3Image = catchAsyncError(async (req, res, next) => {
   const {key}=req.query
   console.log("This is key from Api",key)  
-  deleteS3Object(key);
+  await deleteS3Object(key);
   res.status(200).json({
     success: true,
     message: "User details updated successfully",

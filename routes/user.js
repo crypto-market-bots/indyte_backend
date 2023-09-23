@@ -22,7 +22,7 @@ router.route("/get-user-detail").get(isAuthenticated("app"), getUser);
 
 router.route("/get-detail").get(isAuthenticated("web"), getUser);
 
-router.route("/delete-s3-image/:key").get(deleteS3Image);
+router.route("/delete-s3-image").delete(deleteS3Image);
 
 router
   .route("/change-user-password")
