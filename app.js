@@ -1,14 +1,19 @@
 const express = require("express");
 const app = express();
 const errorMiddleware = require("./middleware/error");
-var bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-app.use(bodyParser.json());
-require("dotenv").config();
-
 const fileUpload = require("express-fileupload");
-app.use(bodyParser.urlencoded({ extended: true }));
+const cors = require("cors");
 
+app.use(cors({
+  origin: '*',
+  methods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -16,22 +21,12 @@ app.use(
     useTempFiles: true,
   })
 );
-var cors = require("cors");
-const corsOptions = {
-  origin: '*',
-  methods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}
-app.use(cors(corsOptions));
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  next();
-});
-const { application } = require("express");
 
 app.get("/health", (req, res, next) => {
   res.send("OK");
 });
+
+
 const users = require("./routes/user");
 const common = require("./routes/common");
 const sleepTracker = require("./routes/sleepTracker");
