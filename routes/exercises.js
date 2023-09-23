@@ -12,6 +12,7 @@ const router = express.Router();
 router
   .route("/add-exercise")
   .post(isAuthenticated("web"), authorizedRoles("dietitian",'admin'), createExercise);
+
 router
   .route("/delete-exercise/:exerciseId")
   .delete(
@@ -19,6 +20,7 @@ router
     authorizedRoles("dietitian", "admin"),
     deleteExercise
   );
+
 router
   .route("/update-exercise/:exerciseId")
   .put(
@@ -26,6 +28,7 @@ router
     authorizedRoles("dietitian", "admin"),
     updateExercise
   );
+
 router
   .route("/exercises")
   .get(
@@ -33,6 +36,7 @@ router
     authorizedRoles("dietitian", "admin"),
     getAllExercises
   );
+  
 router
   .route("/exercises/:exerciseId")
   .get(

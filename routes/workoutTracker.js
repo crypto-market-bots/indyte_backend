@@ -6,10 +6,16 @@ const {
   updateWorkout,
   workoutRecommendation,
   workoutCompleted,
+  userWorkoutRecommendationDelete,
   fetchWorkoutRecommendations,
+  userWorkoutRecommendationFetchApp,
   fetchExercise,
+  userWorkoutRecommendationUpdate,
   fetchWorkouts,
+  userWorkoutRecommendationFetch,
   fetchWorkout,
+  userWorkoutRecommendation,
+
 } = require("../workoutTracker/controller");
 
 const router = express.Router();
@@ -51,10 +57,49 @@ router
   );
 
 
+//Recommdation 
+  router
+  .route("/new-user-workout-recommendation")
+  .post(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian","admin"),
+    userWorkoutRecommendation
+  );
 
-router.route("/new-workout-recommendation").post(isAuthenticated, workoutRecommendation);
+  router
+  .route("/fetch-user-workout-recommendation/:user_id")
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian","admin"),
+    userWorkoutRecommendationFetch
+  );
+
+  router
+  .route("/update-user-workout-recommendation/:Id")
+  .get(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian","admin"),
+    userWorkoutRecommendationUpdate
+  );
+
+  router
+  .route("/delete-workout-meal-recommendation/:Id")
+  .delete(
+    isAuthenticated("web"),
+    authorizedRoles("dietitian","admin"),
+    userWorkoutRecommendationDelete
+  );
+
+
+  router
+  .route("/assignedWorkout/:assignedId")
+  .get(
+    isAuthenticated("app"),
+    userWorkoutRecommendationFetchApp
+  );
+
+
 router.route("/workout-completed").post(isAuthenticated, workoutCompleted);
-router.route("/fetch-workout-recommendations/:date").get(isAuthenticated, fetchWorkoutRecommendations);
-router.route("/fetch-workout").get(isAuthenticated, fetchWorkout);
+// router.route("/fetch-workout").get(isAuthenticated, fetchWorkout);
 
 module.exports = router

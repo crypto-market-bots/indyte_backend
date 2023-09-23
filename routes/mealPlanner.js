@@ -60,6 +60,7 @@ router
 router
   .route("/add-meal")
   .post(isAuthenticated("web"), authorizedRoles("dietitian", "admin"), addMeal);
+  
 router
   .route("/delete-meal/:mealId")
   .delete(
