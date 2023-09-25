@@ -49,7 +49,7 @@ router
 
 // For App 
 router
-  .route("/assignedMeal/:assignedId")
+  .route("/get-assigned-Meal")
   .get(
     isAuthenticated("app"),
     userMealRecommendationFetchApp
@@ -60,6 +60,7 @@ router
 router
   .route("/add-meal")
   .post(isAuthenticated("web"), authorizedRoles("dietitian", "admin"), addMeal);
+  
 router
   .route("/delete-meal/:mealId")
   .delete(

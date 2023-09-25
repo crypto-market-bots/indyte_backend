@@ -62,37 +62,32 @@ const workoutRecommendationSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-
-  workout: {
+  workout_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'WorkOut',
     required: true,
   },
-
   difficulty: {
     type: String,
+    enum: ["BEGINNER", "INTERMEDIATE", "HARD",],
     required: true,
   },
-
-  schedule_time: {
-    type: Date,
-    required: true,
-  },
-
-  created_time: {
-    type: Date,
-    default: Date.now,
-  },
-  is_completed : {
+  user_picked: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  created_by: {
+  user_skip: {
+    type: Boolean,
+    default: false,
+  },
+  assigned_by: {
+    // dietition
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "dietitian",
     required: true,
   },
-});
+  
+},{timestamps:true});
 
 
 //1,2,3,4

@@ -16,7 +16,7 @@ const router = express.Router();
 router.route("/register-user").post(UserRegistration);
 router.route("/login").post(login);
 // router.route("/login-admin").post(loginAdmin);
-router.route("/update-user-profile").put(isAuthenticated, updateUserProfile);
+router.route("/update-user-profile").put(isAuthenticated("app"), updateUserProfile);
 
 router.route("/get-user-detail").get(isAuthenticated("app"), getUser);
 
