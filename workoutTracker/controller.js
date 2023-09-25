@@ -382,18 +382,23 @@ exports.userWorkoutRecommendationFetchApp = catchAsyncError(
   async (req, res, next) => {
     // Api for to add meal : dietition
     try {
-      const { assignedId } = req.params;
-      const workoutRecommdation = await workoutRecommendation.findById(
-        assignedId
-      );
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      console.log(today, "this is today date");
+      const workoutRecommdation = await workoutRecommendation.find({
+        user: req.user.id,
+        date: { $gte: startOfDay, $lte: endOfDay },
+      });
       res.status(201).json({
         success: true,
         data: workoutRecommdation,
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
   }
 );
@@ -458,27 +463,28 @@ exports.userWorkoutRecommendationUpdate = catchAsyncError(
     try {
       const recommendationId = req.params.Id; // Correct variable name to recommendationId
       const { user_id, workout_id, difficulty, date } = req.body;
-  
+
       if (!user_id || !workout_id || !difficulty || !date) {
         return next(new ErrorHander("All fields are required", 400));
       }
-  
+
       // Find and update the existing user workout recommendation by ID
-      const updatedRecommendation = await workoutRecommendation.findByIdAndUpdate(
-        recommendationId,
-        {
-          user_id,
-          workout_id,
-          difficulty,
-          date,
-        },
-        { new: true, runValidators: true }
-      );
-  
+      const updatedRecommendation =
+        await workoutRecommendation.findByIdAndUpdate(
+          recommendationId,
+          {
+            user_id,
+            workout_id,
+            difficulty,
+            date,
+          },
+          { new: true, runValidators: true }
+        );
+
       if (!updatedRecommendation) {
         return next(new ErrorHander("Workout recommendation not found", 404));
       }
-  
+
       res.status(200).json({
         success: true,
         message: "Recommendation updated successfully",

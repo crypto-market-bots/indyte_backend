@@ -60,23 +60,44 @@ exports.userMealRecommendation = catchAsyncError(async (req, res, next) => {
   }
 });
 
-exports.userMealRecommendationFetchApp = catchAsyncError(async (req, res, next) => {
-  // Api for to add meal : dietition
-  try {
-    const { assignedId } = req.params;
-    const mealsRecommdation = await UserMealRecommendation.findById(assignedId).populate("meal");
-    res.status(201).json({
-      success: true,
-      data: mealsRecommdation,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch meals recomdation ",error });
+exports.userMealRecommendationFetchApp = catchAsyncError(
+  async (req, res, next) => {
+    // Api for to add meal : dietition
+    try {
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      console.log(today, "this is today date");
+      console.log(req.user.id)
+      const mealsRecommdation = await UserMealRecommendation.find({
+        user: req.user.id ,
+        date: { $gte: startOfDay, $lte: endOfDay },
+      }).populate("meal");
+      res.status(201).json({
+        success: true,
+        data: mealsRecommdation,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch meals recomdation ",});
+    }
   }
-});
+);
 
 exports.userMealRecommendationFetch = catchAsyncError(
   async (req, res, next) => {
     try {
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      console.log(today);
       const { user_id } = req.params;
 
       if (!user_id) {
@@ -84,7 +105,7 @@ exports.userMealRecommendationFetch = catchAsyncError(
       }
 
       const meal_recomadation = await UserMealRecommendation.find({
-        $or: [{ user: user_id }],
+        $or: [{ user: user_id,  date: { $gte: startOfDay, $lte: endOfDay }, }],
       }).populate("meal");
       if (meal_recomadation) {
         res.status(201).json({ success: true, data: meal_recomadation });
@@ -171,82 +192,83 @@ exports.userMealRecommendationUpdate = catchAsyncError(
   }
 );
 
-exports.addMeal =(data) => {
-  return "Added"
+exports.addMeal = (data) =>
+  catchAsyncError(async (req, res, next) => {
+    try {
+      console.log("add meal function Called");
+      // return "done"
+      req.body = data;
+      const { name, description, ytlink1 } = req.body;
+      const { meal_image } = req.files;
+      const formattedNutrition = JSON.parse(req.body.nutritions);
+      const formatteRequiredIngredients = JSON.parse(
+        req.body.required_ingredients
+      );
+      const formattedSteps = JSON.parse(req.body.steps);
 
-  // try {
-  //   console.log("add meal function Called")
-  //   // return "done"
-  //   req.body=data
-  //   const { name, description, ytlink1 } = req.body;
-  //   const { meal_image } = req.files;
-  //   const formattedNutrition = JSON.parse(req.body.nutritions);
-  //   const formatteRequiredIngredients = JSON.parse(
-  //     req.body.required_ingredients
-  //   );
-  //   const formattedSteps = JSON.parse(req.body.steps);
+      if (
+        !name ||
+        !description ||
+        !meal_image ||
+        !formattedNutrition ||
+        !formatteRequiredIngredients
+      ) {
+        return next(new ErrorHander("All fields are required", 400));
+      }
 
-  //   if (
-  //     !name ||
-  //     !description ||
-  //     !meal_image ||
-  //     !formattedNutrition ||
-  //     !formatteRequiredIngredients
-  //   ) {
-  //     return next(new ErrorHander("All fields are required", 400));
-  //   }
+      const created_by = req.user._id;
 
-  //   const created_by = req.user._id;
+      const sameMeal = await Meal.findOne({ name: name });
+      if (sameMeal) {
+        console.log("The Meal with same name already exist ", sameMeal);
+        return next(new ErrorHander("Meal with same name already exist ", 400));
+      }
 
-  //   const sameMeal = await Meal.findOne({ name: name });
-  //   if (sameMeal) {
-  //     console.log("The Meal with same name already exist ", sameMeal);
-  //     return next(new ErrorHander("Meal with same name already exist ", 400));
-  //   }
+      const newMeal = new Meal({
+        name,
+        nutritions: formattedNutrition,
+        description,
+        ytlink1,
+        required_ingredients: formatteRequiredIngredients,
+        created_by,
+        steps: formattedSteps, // Include the steps array
+      });
 
-  //   const newMeal = new Meal({
-  //     name,
-  //     nutritions: formattedNutrition,
-  //     description,
-  //     ytlink1,
-  //     required_ingredients: formatteRequiredIngredients,
-  //     created_by,
-  //     steps: formattedSteps, // Include the steps array
-  //   });
+      const meal_image_data = await uploadAndPushImage(
+        "images/meal",
+        meal_image,
+        "meal_image",
+        name
+      );
 
-  //   const meal_image_data = await uploadAndPushImage(
-  //     "images/meal",
-  //     meal_image,
-  //     "meal_image",
-  //     name
-  //   );
+      if (!meal_image_data.location) return next(new ErrorHander(data));
+      newMeal.meal_image = meal_image_data.location;
+      newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
+      console.log(
+        "req.body.image",
+        meal_image_data.location,
+        meal_image_data.key
+      );
 
-  //   if (!meal_image_data.location) return next(new ErrorHander(data));
-  //   newMeal.meal_image = meal_image_data.location;
-  //   newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
-  //   console.log(
-  //     "req.body.image",
-  //     meal_image_data.location,
-  //     meal_image_data.key
-  //   );
+      // Save the new meal to the database
+      const savedMeal = await newMeal.save();
 
-  //   // Save the new meal to the database
-  //   const savedMeal = await newMeal.save();
+      if (!savedMeal) {
+        return next(
+          new ErrorHander("Failed to save meal to the database", 500)
+        );
+      }
 
-  //   if (!savedMeal) {
-  //     return next(new ErrorHander("Failed to save meal to the database", 500));
-  //   }
-
-  //   res.status(201).json({
-  //     success: true,
-  //     message: "Meal added successfully",
-  //     data: savedMeal,
-  //   });
-  // } catch (error) {
-  //   // Handle any error that occurred during the process
-  //   return next(new ErrorHander(error.message, 500));
-  // }
-};
+      res.status(201).json({
+        success: true,
+        message: "Meal added successfully",
+        data: savedMeal,
+      });
+    } catch (error) {
+      // Handle any error that occurred during the process
+      return next(new ErrorHander(error.message, 500));
+    }
+  });
 
 exports.deleteMeal = catchAsyncError(async (req, res, next) => {
   const mealId = req.params.mealId;

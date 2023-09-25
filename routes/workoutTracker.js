@@ -92,7 +92,7 @@ router
 
 
   router
-  .route("/assignedWorkout/:assignedId")
+  .route("/get-assigned-workout")
   .get(
     isAuthenticated("app"),
     userWorkoutRecommendationFetchApp

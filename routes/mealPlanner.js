@@ -49,7 +49,7 @@ router
 
 // For App 
 router
-  .route("/assignedMeal/:assignedId")
+  .route("/get-assigned-Meal")
   .get(
     isAuthenticated("app"),
     userMealRecommendationFetchApp
