@@ -38,7 +38,7 @@ exports.userMealRecommendation = catchAsyncError(async (req, res, next) => {
 
     console.log(req.body);
 
-    if (!user_id || !meal_id || !meal_period || !quantity) {
+    if (!user_id || !meal_id || !meal_period || !quantity || !date) {
       return next(new ErrorHander("All fields are required, including", 400));
     }
 

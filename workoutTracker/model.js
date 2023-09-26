@@ -62,6 +62,10 @@ const workoutRecommendationSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  date: {
+    type: Date,
+    required: [true, "Please Specify Date You want to assign"],
+  },
   workout_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'WorkOut',

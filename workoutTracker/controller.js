@@ -389,6 +389,7 @@ exports.userWorkoutRecommendationFetchApp = catchAsyncError(
       const endOfDay = new Date(today);
       endOfDay.setHours(23, 59, 59, 999);
       console.log(today, "this is today date");
+      // date: { $gte: startOfDay, $lte: endOfDay },
       const workoutRecommdation = await workoutRecommendation.find({
         user: req.user.id,
         date: { $gte: startOfDay, $lte: endOfDay },
