@@ -3,111 +3,144 @@ const ErrorHander = require("../utils/errorhander");
 const { uploadAndPushImage } = require("../Common/uploadToS3");
 // const { Exercise } = require("./model");
 const moment = require("moment");
-const {addMeal}=require('../mealPlanner/controller')
+const {addMeal,addMealTemplate}=require('../mealPlanner/controller')
 const {Meal}=require('../mealPlanner/model')
 
 const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
 
-
 exports.createEntity = catchAsyncError(async (req, res, next) => {
-    const entity = req.params.entity; // Get the entity type from the route parameter
-    const data = req.body; // Assuming the data to create the entity is in the request body
-  
-    // Logic to create the entity based on the entity type
-    // You would need to implement this logic for each entity type (meals, exercises, workouts)
+  const entity = req.params.entity; // Get the entity type from the route parameter
+  const data = req.body; // Assuming the data to create the entity is in the request body
+
+  try {
     let createdEntity;
+
     switch (entity) {
       case 'meal':
-        
-          try {
-            console.log("add meal function Called")
-            // return "done"
-            const { name, description, ytlink1 } = req.body;
-            const { meal_image } = req.files;
-            const formattedNutrition = JSON.parse(req.body.nutritions);
-            const formatteRequiredIngredients = JSON.parse(
-              req.body.required_ingredients
-            );
-            const formattedSteps = JSON.parse(req.body.steps);
-        
-            if (
-              !name ||
-              !description ||
-              !meal_image 
-              // !formattedNutrition ||
-              // !formatteRequiredIngredients
-            ) {
-              return next(new ErrorHander("All fields are required", 400));
-            }
-        
-            const created_by = req.user._id;
-        
-            const sameMeal = await Meal.findOne({ name: name });
-            if (sameMeal) {
-              console.log("The Meal with same name already exist ", sameMeal);
-              return next(new ErrorHander("Meal with same name already exist ", 400));
-            }
-        
-            const newMeal = new Meal({
-              name,
-              nutritions: formattedNutrition,
-              description,
-              ytlink1,
-              required_ingredients: formatteRequiredIngredients,
-              created_by,
-              steps: formattedSteps, // Include the steps array
-            });
-        
-            const meal_image_data = await uploadAndPushImage(
-              "images/meal",
-              meal_image,
-              "meal_image",
-              name
-            );
-        
-            if (!meal_image_data.location) return next(new ErrorHander(data));
-            newMeal.meal_image = meal_image_data.location;
-            newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
-            console.log(
-              "req.body.image",
-              meal_image_data.location,
-              meal_image_data.key
-            );
-        
-            // Save the new meal to the database
-            const savedMeal = await newMeal.save();
-        
-            if (!savedMeal) {
-              return next(new ErrorHander("Failed to save meal to the database", 500));
-            }
-        
-            res.status(201).json({
-              success: true,
-              message: "Meal added successfully",
-              data: savedMeal,
-            });
-          } catch (error) {
-            // Handle any error that occurred during the process
-            return next(new ErrorHander(error.message, 500));
+        const {
+          name,
+          description,
+          ytlink1,
+          meal_image,
+          // nutritions,
+          // required_ingredients,
+          steps,
+        } = data;
+
+        // if (!name || !description || !meal_image || !nutritions || !required_ingredients) {
+        //   return next(new ErrorHander("All fields are required", 400));
+        // }
+
+        if (!name || !description || !meal_image ) {
+          return next(new ErrorHander("All fields are required", 400));
+        }
+
+        required_ingredients=[
+          {
+            "name": "chicken",
+            "type": "grams",
+            "quantity": 300
+          },
+          {
+            "name": "onion",
+            "type": "medium",
+            "quantity": 2
+          },
+          {
+            "name": "tomato",
+            "type": "medium",
+            "quantity": 2
+          },
+          {
+            "name": "spices",
+            "type": "packet",
+            "quantity": 1
           }
-       
+        ]
+
+        nutritions=[
+          {
+            "type": "Protein",
+            "value": 25
+          },
+          {
+            "type": "Carbohydrates",
+            "value": 30
+          },
+          {
+            "type": "Fat",
+            "value": 15
+          }
+        ]
+
+        const created_by = req.user._id;
+
+        const sameMeal = await Meal.findOne({ name: name });
+        if (sameMeal) {
+          console.log("The Meal with the same name already exists ", sameMeal);
+          return next(new ErrorHander("Meal with the same name already exists ", 400));
+        }
+
+        const formattedNutrition = JSON.parse(nutritions);
+        const formatteRequiredIngredients = JSON.parse(required_ingredients);
+        const formattedSteps = JSON.parse(steps);
+
+        const newMeal = new Meal({
+          name,
+          nutritions: formattedNutrition,
+          description,
+          ytlink1,
+          required_ingredients: formatteRequiredIngredients,
+          created_by,
+          steps: formattedSteps, // Include the steps array
+        });
+
+        const meal_image_data = await uploadAndPushImage(
+          "images/meal",
+          meal_image,
+          "meal_image",
+          name
+        );
+
+        if (!meal_image_data.location) return next(new ErrorHander(data));
+        newMeal.meal_image = meal_image_data.location;
+        newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
+        console.log(
+          "req.body.image",
+          meal_image_data.location,
+          meal_image_data.key
+        );
+
+        // Save the new meal to the database
+        createdEntity = await newMeal.save();
+
+        if (!createdEntity) {
+          return next(new ErrorHander("Failed to save the meal to the database", 500));
+        }
         break;
+
+      // Handle other entity types (exercise, workout) similarly
+
       case 'exercise':
         // Logic to create an exercise
-        // Example: createdEntity = await Exercise.create(data);
         break;
+
       case 'workout':
         // Logic to create a workout
-        // Example: createdEntity = await Workout.create(data);
         break;
+
       default:
         return res.status(400).json({ message: 'Invalid entity type' });
     }
-  
+
     // Return a success response with the created entity
-    // res.status(201).json({ message: `Created ${entity}`, createdEntity });
-  });
-  
+    res.status(201).json({ message: `Created ${entity}`, createdEntity });
+  } catch (error) {
+    // Handle any error that occurred during the process
+    return next(new ErrorHander(error.message, 500));
+  }
+});
+
   // Delete Entity
   exports.deleteEntity = catchAsyncError(async (req, res, next) => {
     const entity = req.params.entity; // Get the entity type from the route parameter

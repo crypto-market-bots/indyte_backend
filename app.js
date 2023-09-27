@@ -23,6 +23,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 }
 app.use(cors(corsOptions));
+app.use(errorMiddleware);
+
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   next();
@@ -57,6 +59,6 @@ app.use("/api", dietitian);
 app.use("/api", dietitian);
 app.use("/api", equipment);
 app.use("/api", exercises);
-// app.use("/api", templates);
+app.use("/api", templates);
 app.use(errorMiddleware);
 module.exports = app;
