@@ -393,6 +393,11 @@ exports.userWorkoutRecommendationFetchApp = catchAsyncError(
       const workoutRecommdation = await workoutRecommendation.find({
         user: req.user.id,
         date: { $gte: startOfDay, $lte: endOfDay },
+      }).populate({
+        path: 'workout_id',
+        populate: {
+          path: 'exercises',
+        },
       });
       res.status(201).json({
         success: true,
