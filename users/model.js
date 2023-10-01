@@ -64,7 +64,11 @@ const userSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Please Enter the dob"],
     },
-    weight: {
+    current_weight: {
+      type: Number,
+      required: [true, "Please Enter the weight in Kg"],
+    },
+    weight_goal: {
       type: Number,
       required: [true, "Please Enter the weight in Kg"],
     },

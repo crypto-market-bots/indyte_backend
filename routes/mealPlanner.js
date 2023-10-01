@@ -7,6 +7,7 @@ const {
   userMealRecommendationFetchApp,
   userMealRecommendationDelete,
   userMealRecommendationUpdate,
+  updateMealRecommendationApp,
   addMeal,
   updateMeal,
   deleteMeal,
@@ -55,6 +56,12 @@ router
     userMealRecommendationFetchApp
   );
 
+  router
+  .route("/update-assigned-Meal-status/:recommandtionId")
+  .post(
+    isAuthenticated("app"),
+    updateMealRecommendationApp
+  );
 
 
 router

@@ -45,6 +45,7 @@ const dietitian = require("./routes/dietitian");
 const exercises = require("./routes/exercises");
 const equipment = require("./routes/equipment");
 const templates = require("./routes/templates");
+const feedback=require("./routes/Feedback")
 
 
 
@@ -59,6 +60,6 @@ app.use("/api", dietitian);
 app.use("/api", dietitian);
 app.use("/api", equipment);
 app.use("/api", exercises);
-app.use("/api", templates);
+// app.use("/api", templates);
 app.use(errorMiddleware);
 module.exports = app;

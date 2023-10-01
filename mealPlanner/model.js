@@ -121,6 +121,25 @@ const userMealRecommendationSchema = new mongoose.Schema(
         required: true,
       },
     },
+    meal_image_proof: {
+      type: String,
+      default: null,
+    },
+    meal_image_key: {
+      type: String,
+      default: null,
+       default: null,
+    },
+    comment: {
+      type: String,
+      default: null,
+    },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null,
+    },
     assigned_by: {
       // dietition
       type: mongoose.Schema.Types.ObjectId,
