@@ -382,23 +382,64 @@ exports.userWorkoutRecommendationFetchApp = catchAsyncError(
   async (req, res, next) => {
     // Api for to add meal : dietition
     try {
-      const today = new Date();
-      const startOfDay = new Date(today);
-      startOfDay.setHours(0, 0, 0, 0);
+      const { type, value } = req.query;
+      console.log(type, value);
 
-      const endOfDay = new Date(today);
-      endOfDay.setHours(23, 59, 59, 999);
+      const today = new Date();
+      let workoutRecommdation;
+
       console.log(today, "this is today date");
       // date: { $gte: startOfDay, $lte: endOfDay },
-      const workoutRecommdation = await workoutRecommendation.find({
-        user: req.user.id,
-        date: { $gte: startOfDay, $lte: endOfDay },
-      }).populate({
-        path: 'workout_id',
-        populate: {
-          path: 'exercises',
-        },
-      });
+      if(type=="all"){
+        workoutRecommdation = await workoutRecommendation
+        .find({
+          user: req.user.id,
+        })
+        .populate({
+          path: "workout_id",
+          populate: {
+            path: "exercises",
+          },
+        });
+      }
+      else if (type === "date" && value) {
+        console.log(value, "this is today date");
+        const startOfDay = new Date(value);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(value);
+        endOfDay.setHours(23, 59, 59, 999);
+        console.log("startOfDay:", startOfDay);
+        console.log("endOfDay:", endOfDay);
+
+        workoutRecommdation = await workoutRecommendation
+          .find({
+            user: req.user.id,
+            date: { $gte: startOfDay, $lte: endOfDay },
+          })
+          .populate({
+            path: "workout_id",
+            populate: {
+              path: "exercises",
+            },
+          });
+      } else {
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+        workoutRecommdation = await workoutRecommendation
+          .find({
+            user: req.user.id,
+            date: { $gte: startOfDay, $lte: endOfDay },
+          })
+          .populate({
+            path: "workout_id",
+            populate: {
+              path: "exercises",
+            },
+          });
+      }
+
       res.status(201).json({
         success: true,
         data: workoutRecommdation,
@@ -498,6 +539,64 @@ exports.userWorkoutRecommendationUpdate = catchAsyncError(
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+
+exports.updateWorkoutRecommendationApp = catchAsyncError(
+  async (req, res, next) => {
+    try {
+      console.log('update meal status called');
+      const { user_picked, user_skip } = req.body;
+
+      if (!user_picked && !user_skip) {
+        return next(
+          new ErrorHander(
+            "Please Specify Your Update Status",
+            400
+          )
+        );
+      }
+      
+      // Check if both user_skip and user_picked are either both true or both false
+      if ((user_skip && user_picked) || (!user_skip && !user_picked)) {
+        return next(
+          new ErrorHander(
+            "Please Specify Workout is completed or Skipped",
+            400
+          )
+        );
+      }
+
+      // Find the workout recommendation by ID
+      const workoutRecommendationdata = await workoutRecommendation.findById(
+        req.params.recommandtionId
+      );
+
+      if (!workoutRecommendationdata) {
+        return next(new ErrorHander("Workout recommendation not found", 404));
+      }
+
+      if(workoutRecommendationdata.user_picked || workoutRecommendationdata.user_skip ){
+        return next(new ErrorHander("Workout Status already Updated ", 404));
+      }
+
+      if (user_skip) {
+        // User is skipping the workout
+        workoutRecommendationdata.user_skip = true;
+      } else if (user_picked) {
+        // User is marking the workout as completed
+        workoutRecommendationdata.user_picked = true;
+      }
+
+      // Save the updated workout recommendation
+      await workoutRecommendationdata.save();
+
+      res.status(200).json({ success: true, data: workoutRecommendationdata });
+    } catch (error) {
+      console.error("Error in updateWorkoutRecommendationApp:", error);
+      res.status(500).json({ error: "Failed to update workout recommendation" });
     }
   }
 );

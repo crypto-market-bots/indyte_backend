@@ -63,28 +63,64 @@ exports.userMealRecommendation = catchAsyncError(async (req, res, next) => {
 exports.userMealRecommendationFetchApp = catchAsyncError(
   async (req, res, next) => {
     // Api for to add meal : dietition
-    try {
-      const today = new Date();
-      const startOfDay = new Date(today);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(today);
-      endOfDay.setHours(23, 59, 59, 999);
-      console.log(today, "this is today date");
-      console.log(req.user.id)
-      const mealsRecommdation = await UserMealRecommendation.find({
-        user: req.user.id ,
-        date: { $gte: startOfDay, $lte: endOfDay },
-      }).populate("meal");
-      res.status(201).json({
-        success: true,
-        data: mealsRecommdation,
-      });
-    } catch (error) {
-      res
-        .status(500)
-        .json({ error: "Failed to fetch meals recomdation ",});
-    }
+        try {
+          const { type, value } = req.query;
+          console.log(type, value);
+    
+          const today = new Date();
+          let mealRecommdation;
+    
+          console.log(today, "this is today date");
+          // date: { $gte: startOfDay, $lte: endOfDay },
+          if(type=="all"){
+            mealRecommdation = await UserMealRecommendation
+            .find({
+              user: req.user.id,
+            })
+            .populate({
+              path: "meal",
+            });
+          }
+          else if (type === "date" && value) {
+            console.log(value, "this is today date");
+            const startOfDay = new Date(value);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(value);
+            endOfDay.setHours(23, 59, 59, 999);
+            console.log("startOfDay:", startOfDay);
+            console.log("endOfDay:", endOfDay);
+    
+            mealRecommdation = await UserMealRecommendation
+              .find({
+                user: req.user.id,
+                date: { $gte: startOfDay, $lte: endOfDay },
+              })
+              .populate({
+                path: "meal",
+              });
+          } else {
+            const startOfDay = new Date(today);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(today);
+            endOfDay.setHours(23, 59, 59, 999);
+            mealRecommdation = await UserMealRecommendation
+              .find({
+                user: req.user.id,
+                date: { $gte: startOfDay, $lte: endOfDay },
+              })
+              .populate({
+                path: "meal",
+              });
+          }
+    
+          res.status(201).json({
+            success: true,
+            data: mealRecommdation,
+          });
+        } catch (error) {
+          res.status(500).json({ error: error.message });
+        }
+      
   }
 );
 
@@ -105,7 +141,7 @@ exports.userMealRecommendationFetch = catchAsyncError(
       }
 
       const meal_recomadation = await UserMealRecommendation.find({
-        $or: [{ user: user_id,  date: { $gte: startOfDay, $lte: endOfDay }, }],
+        $or: [{ user: user_id, date: { $gte: startOfDay, $lte: endOfDay } }],
       }).populate("meal");
       if (meal_recomadation) {
         res.status(201).json({ success: true, data: meal_recomadation });
@@ -270,82 +306,81 @@ exports.addMeal = (data) =>
     }
   });
 
+exports.addMealTemplate = catchAsyncError(async (req, res, next) => {
+  try {
+    console.log("add meal function Called");
+    const data = req.body; // Assuming the data to create the meal is in the request body
+    const { name, description, ytlink1 } = data;
+    const { meal_image } = req.files;
+    const formattedNutrition = JSON.parse(data.nutritions);
+    const formatteRequiredIngredients = JSON.parse(data.required_ingredients);
+    const formattedSteps = JSON.parse(data.steps);
 
-  exports.addMealTemplate = catchAsyncError(async (req, res, next) => {
-    try {
-      console.log("add meal function Called");
-      const data = req.body; // Assuming the data to create the meal is in the request body
-      const { name, description, ytlink1 } = data;
-      const { meal_image } = req.files;
-      const formattedNutrition = JSON.parse(data.nutritions);
-      const formatteRequiredIngredients = JSON.parse(
-        data.required_ingredients
-      );
-      const formattedSteps = JSON.parse(data.steps);
-  
-      if (
-        !name ||
-        !description ||
-        !meal_image ||
-        !formattedNutrition ||
-        !formatteRequiredIngredients
-      ) {
-        return next(new ErrorHander("All fields are required", 400));
-      }
-  
-      const created_by = req.user._id;
-  
-      const sameMeal = await Meal.findOne({ name: name });
-      if (sameMeal) {
-        console.log("The Meal with the same name already exists ", sameMeal);
-        return next(new ErrorHander("Meal with the same name already exists ", 400));
-      }
-  
-      const newMeal = new Meal({
-        name,
-        nutritions: formattedNutrition,
-        description,
-        ytlink1,
-        required_ingredients: formatteRequiredIngredients,
-        created_by,
-        steps: formattedSteps, // Include the steps array
-      });
-  
-      const meal_image_data = await uploadAndPushImage(
-        "images/meal",
-        meal_image,
-        "meal_image",
-        name
-      );
-  
-      if (!meal_image_data.location) return next(new ErrorHander(data));
-      newMeal.meal_image = meal_image_data.location;
-      newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
-      console.log(
-        "req.body.image",
-        meal_image_data.location,
-        meal_image_data.key
-      );
-  
-      // Save the new meal to the database
-      const savedMeal = await newMeal.save();
-  
-      if (!savedMeal) {
-        return next(new ErrorHander("Failed to save the meal to the database", 500));
-      }
-  
-      res.status(201).json({
-        success: true,
-        message: "Meal added successfully",
-        data: savedMeal,
-      });
-    } catch (error) {
-      // Handle any error that occurred during the process
-      return next(new ErrorHander(error.message, 500));
+    if (
+      !name ||
+      !description ||
+      !meal_image ||
+      !formattedNutrition ||
+      !formatteRequiredIngredients
+    ) {
+      return next(new ErrorHander("All fields are required", 400));
     }
-  });
-  
-  
+
+    const created_by = req.user._id;
+
+    const sameMeal = await Meal.findOne({ name: name });
+    if (sameMeal) {
+      console.log("The Meal with the same name already exists ", sameMeal);
+      return next(
+        new ErrorHander("Meal with the same name already exists ", 400)
+      );
+    }
+
+    const newMeal = new Meal({
+      name,
+      nutritions: formattedNutrition,
+      description,
+      ytlink1,
+      required_ingredients: formatteRequiredIngredients,
+      created_by,
+      steps: formattedSteps, // Include the steps array
+    });
+
+    const meal_image_data = await uploadAndPushImage(
+      "images/meal",
+      meal_image,
+      "meal_image",
+      name
+    );
+
+    if (!meal_image_data.location) return next(new ErrorHander(data));
+    newMeal.meal_image = meal_image_data.location;
+    newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
+    console.log(
+      "req.body.image",
+      meal_image_data.location,
+      meal_image_data.key
+    );
+
+    // Save the new meal to the database
+    const savedMeal = await newMeal.save();
+
+    if (!savedMeal) {
+      return next(
+        new ErrorHander("Failed to save the meal to the database", 500)
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Meal added successfully",
+      data: savedMeal,
+    });
+  } catch (error) {
+    // Handle any error that occurred during the process
+    return next(new ErrorHander(error.message, 500));
+  }
+});
 
 exports.deleteMeal = catchAsyncError(async (req, res, next) => {
   const mealId = req.params.mealId;
@@ -435,3 +470,75 @@ exports.updateMeal = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander(error.message, 500));
   }
 });
+
+exports.updateMealRecommendationApp = catchAsyncError(
+  async (req, res, next) => {
+    try {
+      console.log('update meal status called')
+      const { comment, rating, user_picked, user_skip } = req.body;
+      const meal_image_proof = req?.files?.meal_image_proof;
+
+      if(!user_picked && !user_skip ){
+        return next(
+          new ErrorHander(
+            "Please Speicfy You Update Status",
+            400
+          )
+        );
+      }
+      
+      // Check if required fields are missing when user_completed is true
+      if (user_picked && (!comment || !rating )) {
+        return next(
+          new ErrorHander(
+            "Comment, rating, and meal  are required when marking as completed",
+            400
+          )
+        );
+      }
+
+      // Find the meal recommendation by ID
+      const mealRecommendation = await UserMealRecommendation.findById(
+        req.params.recommandtionId
+      );
+
+      if (!mealRecommendation) {
+        return next(new ErrorHander("Meal recommendation not found", 404));
+      }
+
+      if (user_skip) {
+        // User is skipping the meal
+        mealRecommendation.user_skip = true;
+      } else if (user_picked) {
+        // User is marking the meal as completed
+        mealRecommendation.user_picked = true;
+        mealRecommendation.comment = comment;
+        mealRecommendation.rating = rating;
+
+        // Upload meal image to AWS S3
+        if (meal_image_proof) {
+          const mealImage = await uploadAndPushImage(
+            "images/feedback",
+            meal_image_proof,
+            "meal_image_proof",
+            mealRecommendation._id // Use meal recommendation ID or any unique identifier
+          );
+          if (!mealImage.location) {
+            console.error("Failed to upload meal image");
+            return next(new ErrorHander("Failed to upload meal image", 500));
+          }
+          mealRecommendation.meal_image_proof = mealImage.location;
+          mealRecommendation.meal_image_key = `images/feedback/${mealImage.key}`;
+        }
+      }
+
+      // Save the updated meal recommendation
+      await mealRecommendation.save();
+
+      res.status(200).json({ success: true, data: mealRecommendation });
+    } catch (error) {
+      console.error("Error in updateMealRecommendationApp:", error);
+      res.status(500).json({ error: "Failed to update meal recommendation" });
+    }
+  }
+);

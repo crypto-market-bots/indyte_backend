@@ -11,6 +11,7 @@ const {
   userWorkoutRecommendationFetchApp,
   fetchExercise,
   userWorkoutRecommendationUpdate,
+  updateWorkoutRecommendationApp,
   fetchWorkouts,
   userWorkoutRecommendationFetch,
   fetchWorkout,
@@ -98,8 +99,15 @@ router
     userWorkoutRecommendationFetchApp
   );
 
+  router
+  .route("/update-assigned-workout-status/:recommandtionId")
+  .post(
+    isAuthenticated("app"),
+    updateWorkoutRecommendationApp
+  );
 
-router.route("/workout-completed").post(isAuthenticated, workoutCompleted);
+
+router.route("/workout-completed/:recommandtionId").post(isAuthenticated, workoutCompleted);
 // router.route("/fetch-workout").get(isAuthenticated, fetchWorkout);
 
 module.exports = router
