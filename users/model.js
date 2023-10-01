@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please Enter the weight in Kg"],
     },
+    intital_weight: {
+      type: Number,
+      required: [true, "Please Enter the weight in Kg"],
+    },
     weight_goal: {
       type: Number,
       required: [true, "Please Enter the weight in Kg"],

@@ -454,14 +454,54 @@ exports.userWorkoutRecommendationFetch = catchAsyncError(
   async (req, res, next) => {
     try {
       const { user_id } = req.params;
+      const { type, value } = req.query;
+      console.log(type, value);
 
+      const today = new Date();
+      let workout_recomadation;
+
+      console.log(today, "this is today date");
       if (!user_id) {
         return next(new ErrorHander("All field are required ", 400));
       }
 
-      const workout_recomadation = await workoutRecommendation.find({
-        $or: [{ user: user_id }],
-      });
+
+      if(type=="all"){
+        workout_recomadation = await workoutRecommendation.find({
+          $or: [{ user: user_id }],
+        }.populate({
+          path: "workout_id",
+        }));
+      }
+      else if (type === "date" && value) {
+        console.log(value, "this is today date");
+        const startOfDay = new Date(value);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(value);
+        endOfDay.setHours(23, 59, 59, 999);
+        console.log("startOfDay:", startOfDay);
+        console.log("endOfDay:", endOfDay);
+
+        workout_recomadation = await workoutRecommendation.find({
+          $or: [{ user: user_id }],
+          date: { $gte: startOfDay, $lte: endOfDay },
+        }.populate({
+          path: "workout_id",
+        }));
+        
+      } else {
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+        workout_recomadation = await workoutRecommendation.find({
+          $or: [{ user: user_id }],
+          date: { $gte: startOfDay, $lte: endOfDay },
+        }.populate({
+          path: "workout_id",
+        }));
+      }
+      
       if (workout_recomadation) {
         res.status(201).json({ success: true, data: workout_recomadation });
       } else {
