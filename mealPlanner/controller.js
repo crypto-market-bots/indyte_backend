@@ -1,6 +1,7 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { uploadAndPushImage } = require("../Common/uploadToS3");
 
+
 const ErrorHander = require("../utils/errorhander");
 const { Meal, UserMealRecommendation } = require("./model");
 const moment = require("moment");
@@ -233,7 +234,6 @@ exports.addMeal = (data) =>
     try {
       console.log("add meal function Called");
       // return "done"
-      req.body = data;
       const { name, description, ytlink1 } = req.body;
       const { meal_image } = req.files;
       const formattedNutrition = JSON.parse(req.body.nutritions);
