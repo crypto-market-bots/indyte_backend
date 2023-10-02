@@ -390,19 +390,18 @@ exports.userWorkoutRecommendationFetchApp = catchAsyncError(
 
       console.log(today, "this is today date");
       // date: { $gte: startOfDay, $lte: endOfDay },
-      if(type=="all"){
+      if (type == "all") {
         workoutRecommdation = await workoutRecommendation
-        .find({
-          user: req.user.id,
-        })
-        .populate({
-          path: "workout_id",
-          populate: {
-            path: "exercises",
-          },
-        });
-      }
-      else if (type === "date" && value) {
+          .find({
+            user: req.user.id,
+          })
+          .populate({
+            path: "workout_id",
+            populate: {
+              path: "exercises",
+            },
+          });
+      } else if (type === "date" && value) {
         console.log(value, "this is today date");
         const startOfDay = new Date(value);
         startOfDay.setHours(0, 0, 0, 0);
@@ -455,61 +454,59 @@ exports.userWorkoutRecommendationFetch = catchAsyncError(
     try {
       const { user_id } = req.params;
       const { type, value } = req.query;
-      console.log(type, value);
 
       const today = new Date();
       let workout_recomadation;
 
-      console.log(today, "this is today date");
       if (!user_id) {
-        return next(new ErrorHander("All field are required ", 400));
+        return next(new ErrorHander("All fields are required", 400));
       }
 
-
-      if(type=="all"){
-        workout_recomadation = await workoutRecommendation.find({
-          $or: [{ user: user_id }],
-        }.populate({
-          path: "workout_id",
-        }));
-      }
-      else if (type === "date" && value) {
-        console.log(value, "this is today date");
+      if (type == "all") {
+        workout_recomadation = await workoutRecommendation
+          .find({ $or: [{ user: user_id }] })
+          .populate({
+            path: "workout_id",
+          });
+      } else if (type === "date" && value) {
         const startOfDay = new Date(value);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(value);
         endOfDay.setHours(23, 59, 59, 999);
-        console.log("startOfDay:", startOfDay);
-        console.log("endOfDay:", endOfDay);
 
-        workout_recomadation = await workoutRecommendation.find({
-          $or: [{ user: user_id }],
-          date: { $gte: startOfDay, $lte: endOfDay },
-        }.populate({
-          path: "workout_id",
-        }));
-        
+        workout_recomadation = await workoutRecommendation
+          .find({
+            $or: [{ user: user_id }],
+            date: { $gte: startOfDay, $lte: endOfDay },
+          })
+          .populate({
+            path: "workout_id",
+          });
       } else {
         const startOfDay = new Date(today);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(today);
         endOfDay.setHours(23, 59, 59, 999);
-        workout_recomadation = await workoutRecommendation.find({
-          $or: [{ user: user_id }],
-          date: { $gte: startOfDay, $lte: endOfDay },
-        }.populate({
-          path: "workout_id",
-        }));
+
+        workout_recomadation = await workoutRecommendation
+          .find({
+            $or: [{ user: user_id }],
+            date: { $gte: startOfDay, $lte: endOfDay },
+          })
+          .populate({
+            path: "workout_id",
+          });
       }
-      
+
       if (workout_recomadation) {
         res.status(201).json({ success: true, data: workout_recomadation });
       } else {
         res
           .status(500)
-          .json({ success: true, message: "Failed to fetch recommandtion" });
+          .json({ success: true, message: "Failed to fetch recommendation" });
       }
     } catch (error) {
+      console.log("error", error);
       res
         .status(500)
         .json({ error: "Failed to fetch user meal recommendations" });
@@ -583,29 +580,20 @@ exports.userWorkoutRecommendationUpdate = catchAsyncError(
   }
 );
 
-
 exports.updateWorkoutRecommendationApp = catchAsyncError(
   async (req, res, next) => {
     try {
-      console.log('update meal status called');
+      console.log("update meal status called");
       const { user_picked, user_skip } = req.body;
 
       if (!user_picked && !user_skip) {
-        return next(
-          new ErrorHander(
-            "Please Specify Your Update Status",
-            400
-          )
-        );
+        return next(new ErrorHander("Please Specify Your Update Status", 400));
       }
-      
+
       // Check if both user_skip and user_picked are either both true or both false
       if ((user_skip && user_picked) || (!user_skip && !user_picked)) {
         return next(
-          new ErrorHander(
-            "Please Specify Workout is completed or Skipped",
-            400
-          )
+          new ErrorHander("Please Specify Workout is completed or Skipped", 400)
         );
       }
 
@@ -618,7 +606,10 @@ exports.updateWorkoutRecommendationApp = catchAsyncError(
         return next(new ErrorHander("Workout recommendation not found", 404));
       }
 
-      if(workoutRecommendationdata.user_picked || workoutRecommendationdata.user_skip ){
+      if (
+        workoutRecommendationdata.user_picked ||
+        workoutRecommendationdata.user_skip
+      ) {
         return next(new ErrorHander("Workout Status already Updated ", 404));
       }
 
@@ -636,7 +627,9 @@ exports.updateWorkoutRecommendationApp = catchAsyncError(
       res.status(200).json({ success: true, data: workoutRecommendationdata });
     } catch (error) {
       console.error("Error in updateWorkoutRecommendationApp:", error);
-      res.status(500).json({ error: "Failed to update workout recommendation" });
+      res
+        .status(500)
+        .json({ error: "Failed to update workout recommendation" });
     }
   }
 );
