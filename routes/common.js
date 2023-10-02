@@ -9,7 +9,7 @@ router.route("/sendotp").post(sendOTP);
 
 router
   .route("/get-history")
-  .get(
+  .post(
     isAuthenticated("web"),
     authorizedRoles("admin", "dietitian"),
     getHistory
