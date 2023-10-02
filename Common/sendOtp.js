@@ -78,14 +78,18 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
 
     let DatabaseName;
     if(type==="workout"){
+      console.log("into workout Block")
       DatabaseName=workoutRecommendation
       populationKeyName='workout_id'
     }
     else if(type==="meal"){
+      console.log("into Meal Block")
+      
       DatabaseName=UserMealRecommendation
       populationKeyName='meal'
     }
     else{
+      console.log("into meal Block")
       DatabaseName=UserMealRecommendation
       populationKeyName='meal'
     }
