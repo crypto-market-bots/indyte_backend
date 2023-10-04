@@ -69,51 +69,81 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   const {
     email,
     phone,
-    first_name,
-    last_name,
+    full_name,
     password,
     gender,
     dob,
-    weight,
-    height,
-    goal,
+    weight, // Use a single weight field (either kg or lbs)
+    height, // Use a single height field (either cm or ft/in)
+    goal_weight,
+    weight_unit, // Weight unit (lbs or kg)
+    height_unit, // Height unit (cm or ft)
   } = req.body;
   const { profile_image } = req.files;
 
   if (
     !email ||
     !phone ||
-    !first_name ||
-    !last_name ||
+    !full_name ||
     !password ||
     !gender ||
     !dob ||
     !weight ||
     !height ||
-    !goal
+    !goal_weight ||
+    !weight_unit ||
+    !height_unit
   ) {
     return next(new ErrorHander("All fields are required", 400));
   }
+
   const user = await User.findOne({
     $or: [{ email: email }, { phone: phone }],
   });
+
   if (user) {
-    return next(new ErrorHander("User Already Exist", 400));
+    return next(new ErrorHander("User Already Exists", 400));
   }
-  let trimmedpassword = password;
-  trimmedpassword = trimmedpassword.trim();
-  if (trimmedpassword.length < 6) {
+
+  let trimmedPassword = password.trim();
+
+  if (trimmedPassword.length < 6) {
     return next(
       new ErrorHander(
-        "password should be greater than or equal to 6 Characters",
+        "Password should be greater than or equal to 6 Characters",
         400
       )
     );
   }
+
   const salt = await bcrypt.genSalt(10);
-  const hashPassword = await bcrypt.hash(trimmedpassword, salt);
+  const hashPassword = await bcrypt.hash(trimmedPassword, salt);
+
+  // Convert weight to kg if it's in lbs
+  let weight_kg = weight;
+  if (weight_unit === 'lbs') {
+    weight_kg = weight * 0.453592;
+  }
+
+  // Convert height to cm if it's in ft
+  let height_cm = height;
+  if (height_unit === 'ft') {
+    const [feet, inches] = height.split("'");
+    height_cm = (parseFloat(feet) * 30.48) + (parseFloat(inches) * 2.54);
+  }
+
+  // Calculate BMI
+  const bmi = (weight_kg / ((height_cm / 100) ** 2)).toFixed(2);
+
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
+  req.body.initial_weight = weight_kg; // Store initial weight in kg
+  req.body.bmi = null; // Include BMI in user registration
+
+  // Include weight_unit and height_unit
+  req.body.weight_unit = weight_unit;
+  req.body.height_unit = height_unit;
+  req.body.intial_weight = weight;
 
   const data = await uploadAndPushImage(
     "user/profile",
@@ -121,9 +151,14 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
     "profile_image",
     email
   );
-  if (!data.location) return next(new ErrorHander(data));
+
+  if (!data.location) {
+    return next(new ErrorHander(data));
+  }
+
   req.body.image = data.location;
   req.body.profile_image_key = `user/profile/${data.key}`;
+
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -135,6 +170,7 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHander(error, 400));
     });
 });
+
 
 // exports.loginUser = catchAsyncError(async (req, res, next) => {
 //   const { email, password } = req.body;
@@ -242,11 +278,14 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
     return next(
       new ErrorHander("Some error occurred. User doesn't exist. Try again", 400)
     );
+
+  // Check if certain fields cannot be updated
   if (req.body.email || req.body.phone || req.body.password || req.body.type)
     return next(
       new ErrorHander("You are not able to change the email, phone & Type", 400)
     );
 
+  // Check if a profile image is provided in the request
   if (req.files && req.files.profile_image) {
     try {
       const data = await uploadAndPushImage(
@@ -256,32 +295,46 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
       );
       console.log(data);
       if (!data.location) return next(new ErrorHander(data));
+      // ...
 
-      // Delete the user's previous image
-      
-
-      req.body.image = data.location;
-      req.body.profile_image_key = data.key;
+      user.image = data.location;
+      user.profile_image_key = data.key;
+      await deleteS3Object(user.profile_image_key)
     } catch (error) {
       return next(new ErrorHander(error));
     }
   }
 
-  if (req.body.image === "") {
-    req.body.profile_image_key = "";
+  // Define a mapping of field names to user properties
+  const fieldMap = {
+    height_unit: "height_unit",
+    current_meal_type: "current_meal_type",
+    food_dislikes: "food_dislikes",
+    food_allergies: "food_allergies",
+    medical_history: "medical_history",
+    supplements_or_herbs: "supplements_or_herbs",
+    skip_meals_frequency: "skip_meals_frequency",
+    occupation: "occupation",
+    office_timing: "office_timing",
+    location: "location",
+  };
+
+  // Iterate through the mapping and update user properties
+  for (const field in fieldMap) {
+    if (req.body[field]) {
+      user[fieldMap[field]] = req.body[field];
+    }
   }
 
-  const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
-    new: true,
-    runValidators: true,
-    useFindAndModify: false,
-  });
+  // Save the updated user profile
+  await user.save();
 
   res.status(200).json({
     success: true,
     message: "User details updated successfully",
   });
 });
+
 
 // Function to delete an S3 object and return a promise
 

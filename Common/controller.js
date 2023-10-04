@@ -93,6 +93,10 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
       DatabaseName=UserMealRecommendation
       populationKeyName='meal'
     }
+
+    const totalResultLength = await DatabaseName.countDocuments({
+      $or: [{ user: user_id }],
+    });
     
     historyData = await DatabaseName.find({
       $or: [{ user: user_id }],
@@ -103,6 +107,7 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: historyData,
+      length: totalResultLength,
     });
   } catch (error) {
     // Handle any error that occurred during the process

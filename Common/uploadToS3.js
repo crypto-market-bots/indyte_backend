@@ -65,6 +65,7 @@ async function deleteS3Object(key) {
         reject(err);
       } else {
         resolve(data);
+        console.log("Delete Sucessfully")
       }
     });
   });

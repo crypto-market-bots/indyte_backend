@@ -128,22 +128,56 @@ exports.userMealRecommendationFetchApp = catchAsyncError(
 exports.userMealRecommendationFetch = catchAsyncError(
   async (req, res, next) => {
     try {
-      const today = new Date();
-      const startOfDay = new Date(today);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(today);
-      endOfDay.setHours(23, 59, 59, 999);
-      console.log(today);
       const { user_id } = req.params;
+      const { type, value } = req.query;
+      console.log(type, value);
 
+      const today = new Date();
+      let meal_recomadation;
+
+      console.log(today, "this is today date");
       if (!user_id) {
         return next(new ErrorHander("All field are required ", 400));
       }
 
-      const meal_recomadation = await UserMealRecommendation.find({
-        $or: [{ user: user_id, date: { $gte: startOfDay, $lte: endOfDay } }],
-      }).populate("meal");
+
+      if(type==="all"){
+        // console.log("All condtition triggered")
+        meal_recomadation = await UserMealRecommendation.find({
+          $or: [{ user: user_id }],
+        }).populate({
+          path: "meal",
+        });
+      }
+      else if (type === "date" && value) {
+        console.log(value, "this is today date");
+        const startOfDay = new Date(value);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(value);
+        endOfDay.setHours(23, 59, 59, 999);
+        console.log("startOfDay:", startOfDay);
+        console.log("endOfDay:", endOfDay);
+
+        meal_recomadation = await UserMealRecommendation.find({
+          $or: [{ user: user_id }],
+          date: { $gte: startOfDay, $lte: endOfDay },
+        }).populate({
+          path: "meal",
+        });
+        
+      } else {
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+        meal_recomadation = await UserMealRecommendation.find({
+          $or: [{ user: user_id }],
+          date: { $gte: startOfDay, $lte: endOfDay },
+        }).populate({
+          path: "meal",
+        });
+      }
+      
       if (meal_recomadation) {
         res.status(201).json({ success: true, data: meal_recomadation });
       } else {
