@@ -280,33 +280,32 @@ exports.fetchUserDetail = catchAsyncError(async (req, res, next) => {
   const type = req.query.type;
   const mode = req.user.type;
   const { id } = req.params;
-  console.log(mode);
+
   try {
-    if (!type || !id || (type != "dietitian" && type != "user")) {
-      res.status(500).json({ success: false, message: "Incorrect details" });
-    } else {
-      if (type == "dietitian") {
-        const data = await dietitian.findOne({ _id: id });
-        res.status(201).json({
-          success: true,
-          data: data,
-        });
-      } else if (type == "user") {
-        const data = await User.find({ _id: id }).populate(
-          "dietitian",
-          "first_name last_name"
-        );
-        res.status(201).json({
-          success: true,
-          data: data,
-        });
-      }
+    if (!type || !id || (type !== "dietitian" && type !== "user")) {
+      return res.status(400).json({ success: false, message: "Incorrect details" });
     }
+
+    let data;
+    if (type === "dietitian") {
+      data = await dietitian.findOne({ _id: id });
+    } else if (type === "user") {
+      data = await User.findOne({ _id: id }).populate("dietitian", "first_name last_name");
+    }
+
+    if (!data) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "failed to fetch user details" });
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch user details" });
   }
 });
+
 
 // exports.assignDietitian = catchAsyncError(async (req, res, next) => {});

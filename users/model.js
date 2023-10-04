@@ -70,6 +70,16 @@ const userSchema = new mongoose.Schema(
       type: String, // Store the image reference/key here
     },
 
+    dietitian: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "dietitian", // Reference to the Dietitian model (replace "Dietitian" with the actual model name)
+      default: null,
+      validate: {
+        validator: (value) => isValidObjectId(value) || value === null,
+        message: "Invalid dietitian ID",
+      },
+    },
+
     // Lifestyle and Physical Activity
     lifestyle: {
       type: [String], // Array of lifestyle choices (e.g., ["smoke", "vegan"])
