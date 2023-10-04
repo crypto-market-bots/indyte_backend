@@ -1,5 +1,5 @@
 const express = require("express");
-const { sendOTP,getHistory } = require("../Common/sendOtp");
+const { sendOTP,getHistory } = require("../Common/controller");
 
 const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
 

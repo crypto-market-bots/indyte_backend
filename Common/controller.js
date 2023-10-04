@@ -103,6 +103,7 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: historyData,
+      length: historyData.length,
     });
   } catch (error) {
     // Handle any error that occurred during the process
