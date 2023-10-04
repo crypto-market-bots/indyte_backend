@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema(
     },
     intial_weight: {
       type: Number,
-      required: [true, 'Please Enter your goal weight in Kg'],
+      required: [true, 'Please Enter your goal weight in '],
     },
     height: {
       type: Number,

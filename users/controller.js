@@ -75,7 +75,7 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
     dob,
     weight, // Use a single weight field (either kg or lbs)
     height, // Use a single height field (either cm or ft/in)
-    goal,
+    goal_weight,
     weight_unit, // Weight unit (lbs or kg)
     height_unit, // Height unit (cm or ft)
   } = req.body;
@@ -90,7 +90,7 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
     !dob ||
     !weight ||
     !height ||
-    !goal ||
+    !goal_weight ||
     !weight_unit ||
     !height_unit
   ) {
@@ -138,11 +138,12 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   req.body.dob = new Date(dob);
   req.body.password = hashPassword;
   req.body.initial_weight = weight_kg; // Store initial weight in kg
-  req.body.bmi = bmi; // Include BMI in user registration
+  req.body.bmi = null; // Include BMI in user registration
 
   // Include weight_unit and height_unit
   req.body.weight_unit = weight_unit;
   req.body.height_unit = height_unit;
+  req.body.intial_weight = weight;
 
   const data = await uploadAndPushImage(
     "user/profile",
@@ -277,11 +278,14 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
     return next(
       new ErrorHander("Some error occurred. User doesn't exist. Try again", 400)
     );
+
+  // Check if certain fields cannot be updated
   if (req.body.email || req.body.phone || req.body.password || req.body.type)
     return next(
       new ErrorHander("You are not able to change the email, phone & Type", 400)
     );
 
+  // Check if a profile image is provided in the request
   if (req.files && req.files.profile_image) {
     try {
       const data = await uploadAndPushImage(
@@ -291,32 +295,46 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
       );
       console.log(data);
       if (!data.location) return next(new ErrorHander(data));
+      // ...
 
-      // Delete the user's previous image
-      
-
-      req.body.image = data.location;
-      req.body.profile_image_key = data.key;
+      user.image = data.location;
+      user.profile_image_key = data.key;
+      await deleteS3Object(user.profile_image_key)
     } catch (error) {
       return next(new ErrorHander(error));
     }
   }
 
-  if (req.body.image === "") {
-    req.body.profile_image_key = "";
+  // Define a mapping of field names to user properties
+  const fieldMap = {
+    height_unit: "height_unit",
+    current_meal_type: "current_meal_type",
+    food_dislikes: "food_dislikes",
+    food_allergies: "food_allergies",
+    medical_history: "medical_history",
+    supplements_or_herbs: "supplements_or_herbs",
+    skip_meals_frequency: "skip_meals_frequency",
+    occupation: "occupation",
+    office_timing: "office_timing",
+    location: "location",
+  };
+
+  // Iterate through the mapping and update user properties
+  for (const field in fieldMap) {
+    if (req.body[field]) {
+      user[fieldMap[field]] = req.body[field];
+    }
   }
 
-  const userupdate = await User.findByIdAndUpdate(user._id, req.body, {
-    new: true,
-    runValidators: true,
-    useFindAndModify: false,
-  });
+  // Save the updated user profile
+  await user.save();
 
   res.status(200).json({
     success: true,
     message: "User details updated successfully",
   });
 });
+
 
 // Function to delete an S3 object and return a promise
 
