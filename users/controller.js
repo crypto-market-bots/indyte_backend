@@ -273,67 +273,48 @@ exports.getUser = catchAsyncError(async (req, res, next) => {
 
 
 exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
-  const user = await User.findById(req.user.id);
-  if (!user)
+  const userId = req.user.id; // Get the user ID from the authenticated user
+
+  const updateData = req.body; // The data you want to update
+
+  // Define fields that are not allowed to be updated
+  const disallowedFields = ["email", "phone", "password", "type"];
+
+  // Check if any disallowed fields are included in the updateData
+  const disallowedFieldToUpdate = Object.keys(updateData).find((field) =>
+    disallowedFields.includes(field)
+  );
+
+  if (disallowedFieldToUpdate) {
     return next(
-      new ErrorHander("Some error occurred. User doesn't exist. Try again", 400)
+      new ErrorHander(
+        `Cannot change ${disallowedFieldToUpdate}`,
+        400
+      )
     );
-
-  // Check if certain fields cannot be updated
-  if (req.body.email || req.body.phone || req.body.password || req.body.type)
-    return next(
-      new ErrorHander("You are not able to change the email, phone & Type", 400)
-    );
-
-  // Check if a profile image is provided in the request
-  if (req.files && req.files.profile_image) {
-    try {
-      const data = await uploadAndPushImage(
-        req.files.profile_image,
-        "profile_image",
-        user.email
-      );
-      console.log(data);
-      if (!data.location) return next(new ErrorHander(data));
-      // ...
-
-      user.image = data.location;
-      user.profile_image_key = data.key;
-      await deleteS3Object(user.profile_image_key)
-    } catch (error) {
-      return next(new ErrorHander(error));
-    }
   }
 
-  // Define a mapping of field names to user properties
-  const fieldMap = {
-    height_unit: "height_unit",
-    current_meal_type: "current_meal_type",
-    food_dislikes: "food_dislikes",
-    food_allergies: "food_allergies",
-    medical_history: "medical_history",
-    supplements_or_herbs: "supplements_or_herbs",
-    skip_meals_frequency: "skip_meals_frequency",
-    occupation: "occupation",
-    office_timing: "office_timing",
-    location: "location",
-  };
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true } // This option returns the updated document
+    );
 
-  // Iterate through the mapping and update user properties
-  for (const field in fieldMap) {
-    if (req.body[field]) {
-      user[fieldMap[field]] = req.body[field];
+    if (!updatedUser) {
+      return next(new ErrorHander("User not found", 404));
     }
+
+    res.status(200).send({
+      success: true,
+      message: "User details updated successfully",
+      updatedUser, // You can send the updated document as a response
+    });
+  } catch (error) {
+    return next(new ErrorHander(error.message, 400));
   }
-
-  // Save the updated user profile
-  await user.save();
-
-  res.status(200).json({
-    success: true,
-    message: "User details updated successfully",
-  });
 });
+
 
 
 // Function to delete an S3 object and return a promise

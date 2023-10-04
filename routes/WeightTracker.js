@@ -1,44 +1,48 @@
-const express = require('express');
+const express = require("express");
 const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
 const {
-  userWorkoutRecommendationFetch,
-  fetchWorkout,
-  userWorkoutRecommendation,
-
-} = require("../workoutTracker/controller");
+  updateWeight,
+  approveWeight,
+  getWeightsByUserId,
+  getWeightsApp,
+  getWeights,
+} = require("../weightTracker/controller");
 
 const router = express.Router();
 
-router
-  .route("/get-weight")
-  .post(isAuthenticated('app'),  createWorkout);
+
+
+
+
+router.route("/update-weight").post(isAuthenticated("app"), updateWeight); //tested
+
+  //for app
+router.get('/get-weights', isAuthenticated('app'), getWeightsByUserId); //tested
+
+
+router.get('/get-weight-history', isAuthenticated('app'), getWeightsApp); //Tested
+
+
+
+
+///Web
 
 router
-  .route("/update-weight")
-  .delete(
-    isAuthenticated("app"),
-    deleteWorkout
-  );
-
-
-
-///Web 
-router
-  .route("/update-workout")
+  .route('/approve-weight/:id')
   .put(
-    isAuthenticated("web"),
-    authorizedRoles("dietitian", "admin"),
-    updateWorkout
+    isAuthenticated('web'),
+    authorizedRoles('dietitian', 'admin'),
+    approveWeight
   );
 
 router
-  .route("/get-weights")
+  .route("/get-weights/:userId")
   .get(
     isAuthenticated("web"),
     authorizedRoles("dietitian", "admin"),
-    fetchWorkouts
+    getWeights
   );
 
 // router.route("/fetch-workout").get(isAuthenticated, fetchWorkout);
 
-module.exports = router
+module.exports = router;
