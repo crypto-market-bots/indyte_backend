@@ -21,7 +21,7 @@ const { application } = require("express");
 
 app.use(cors());
 app.get("/health", (req, res, next) => {
-  res.send("Cicd");
+  res.send("OK");
 });
 app.use(errorMiddleware);
 module.exports = app;
