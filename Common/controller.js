@@ -13,7 +13,7 @@ const jwt = require("jsonwebtoken");
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_TOKEN;
-
+console.log(accountSid,authToken)
 const client = require("twilio")(accountSid, authToken);
 
 const crypto = require("crypto");
@@ -21,41 +21,46 @@ const { runInNewContext } = require("vm");
 // const Seller = require("../models/sellerModel");
 const smsKey = process.env.SMS_SECRET_KEY;
 const twilioNum = process.env.TWILIO_PHONE_NUMBER;
-//Send the otp
+
+
+
+
 exports.sendOTP = catchAsyncError(async (req, res, next) => {
-  if (!req.body.phone)
-    return next(
-      new ErrorHander("Please enter the phone number for send the otp")
-    );
-  const phone = "+91" + req.body.phone;
+  // const phone = req.phone;
+  const phone = "+91"+ req.phone;
   // phone =+phone;
+  console.log("these are envs",accountSid,authToken)
 
   const otp = Math.floor(100000 + Math.random() * 900000);
-
+  
   const ttl = 5 * 60 * 1000;
-  const expires = Date.now() + ttl;
-  const data = `${phone}.${otp}.${expires}`;
-  const hash = crypto.createHmac("sha256", smsKey).update(data).digest("hex");
-  const fullHash = `${hash}.${expires}`;
-  console.log("hash", twilioNum, phone);
-  client.messages
-    .create({
-      body: `Your One Time Login Password For Indyte is ${otp} . Valid only for 2 minutes`,
-      from: twilioNum,
-      friendlyName: "My First Verify Service",
-      to: phone,
-    })
-    .then((messages) => {
-      res.status(200).send({ phone, hash: fullHash });
-    })
-    .catch((err) => {
-      return next(new ErrorHander(err, 400));
-    });
+const expires = Date.now() + ttl;
+const data = `${phone}.${otp}.${expires}`;
+const hash = crypto.createHmac("sha256", smsKey).update(data).digest("hex");
+const fullHash = `${hash}.${expires}`;
+console.log("hash",twilioNum,phone)
+client.messages
+  .create({
+    body: `Your One Time Login Password For Indyte is ${otp} . Valid only for 2 minutes`,
+    from: twilioNum,
+    friendlyName: "My First Verify Service",
+    to: phone,
+  })
+  .then((messages) => {
+    res.status(200).send({ phone, hash: fullHash });
+  })
+  .catch((err) => {
+    console.log(err)
+    return next(new ErrorHander(err, 400));
+  });
 
-  // res.status(200).send({ phone, hash: fullHash, otp });
-  // this bypass otp via api only for development instead hitting twilio api all the time
-  // Use this way in Production
+  // If none of the error conditions are met, proceed with sending OTP
+  // next();
+
+  
 });
+
+
 
 exports.getHistory = catchAsyncError(async (req, res, next) => {
   try {
@@ -114,3 +119,6 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHander(error.message, 500));
   }
 });
+
+
+

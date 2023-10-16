@@ -13,7 +13,8 @@ const {
 const { otpVerification } = require("../middleware/otpVerfications.js");
 
 const router = express.Router();
-router.route("/register-user").post(UserRegistration);
+// router.route("/register-user").post(otpVerification,UserRegistration);
+// router.route("/register-user").post(otpVerification('LOGIN'));
 router.route("/login").post(login);
 // router.route("/login-admin").post(loginAdmin);
 router.route("/update-user-profile").put(isAuthenticated("app"), updateUserProfile);
