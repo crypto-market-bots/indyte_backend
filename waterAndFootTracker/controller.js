@@ -1,90 +1,109 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const ErrorHander = require("../utils/errorhander");
-const User = require("../users/model");
-const {WaterAndFootTracker} = require("./model");
-const WaterAndFootTrackerLog = require("./model");
-const moment = require("moment")
+const { WaterAndFootTracker } = require("../waterAndFootTracker/model");
 
-exports.addWaterAndFootRecom = catchAsyncError(async (req, res, next) => {
-  const { water_intake, foot_steps, user, schedule_time } = req.body;
-  if (!water_intake || !foot_steps || !user || !schedule_time)
-    return next(new ErrorHander("All Fields are required", 400));
-  const checkUser = await User.findById(user);
-  if (!checkUser) return next(new ErrorHander("User Doesn't Exit", 400));
-  let scheduleTime = moment(schedule_time, "DD-MM-YYYY").toDate();
+exports.createWaterAndFoot = catchAsyncError(async (req, res, next) => {
+  const user = req.user;
+  const { type, value } = req.body;
+  if (!type || !value) {
+    return next(new ErrorHander("Type and Value  is Required"));
+  }
 
-  //here we check the user is already assigned the water and footsteps of not
-  const alreadyAssinged = await WaterAndFootTracker.find({
-    user: user,
-    schedule_time: scheduleTime,
+  const created_Date = new Date().toISOString().split("T")[0];
+
+  // Check if there is existing data with the same user, type, and date
+  const existingData = await WaterAndFootTracker.findOne({
+    user: user._id,
+    type: type,
+    created_Date: created_Date,
   });
-  
-  if (alreadyAssinged.length!==0)
+
+  if (existingData) {
     return next(
       new ErrorHander(
-        "You Assigned the today water and foot already to this user"
+        `Today data already exits for the ${type} with this value ${existingData?.value}`
       )
     );
+  }
 
-  await WaterAndFootTracker.create({
-    created_by: req.user.id,
-    water_intake: water_intake,
-    foot_steps: foot_steps,
-    user: user,
-    schedule_time: scheduleTime,
-  })
-    .then(() => {
-      res.status(200).json({ success: true, message: "Assigned Successfully" });
-    })
-    .catch((err) => {
-      return next(new ErrorHander(err, 400));
-    });
+  // Create a new record if no existing data is found
+  const newData = new WaterAndFootTracker({
+    value,
+    type,
+    user: user._id,
+    created_Date: created_Date,
+  });
+
+  await newData.save();
+
+  res.status(201).json({ message: "Data created successfully", data: newData });
 });
 
-exports.updateWaterAndFootRecom = catchAsyncError(async (req, res, next) => {
+exports.fetchFootAndWater = catchAsyncError(async (req, res, next) => {
+  console.log(":nf");
+  const { type, interval, userId } = req.body;
+  if (!type || !userId || !interval)
+    return next(new ErrorHander("type userId interval is mandatory"));
+  let startDate;
+  const endDate = new Date();
+
+  switch (interval) {
+    case "today":
+      startDate = new Date();
+      break;
+    case "week":
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      break;
+    case "month":
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      break;
+    case "year":
+      startDate = new Date();
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      break;
+    default:
+      return next(new ErrorHander("Invalid Time peroid"));
+  }
+
+  const query = {
+    user: userId,
+    type,
+    created_Date: {
+      $gte: startDate.toISOString().split("T")[0],
+      $lte: endDate.toISOString().split("T")[0],
+    },
+  };
+
+  try {
+    const data = await WaterAndFootTracker.find(query);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    return next(new ErrorHander(error, 400));
+  }
+});
+
+exports.updateWaterAndFoot = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const waterAndFootTracker = await WaterAndFootTracker.find({
-    _id: id,
-    created_by: req.user._id,
-  });
-  
-  if (!waterAndFootTracker)
-    return next(new ErrorHander("Id doesn't exit with this user", 400));
-  const { water_intake, foot_steps, user, schedule_time } = req.body;
-  if (user) {
-    const checkUser = await User.findById(user);
-    
-    if (!checkUser) return next(new ErrorHander("User Doesn't Exit", 400));
+  const data = await WaterAndFootTracker.findById(id);
+  if (!data) return next(new ErrorHander("data not found"));
+  console.log(data,req.user._id);
+  if (req.user._id.toString() != data.user.toString()){
+    return next(
+      new ErrorHander("Failed: You don;t have permission to update", 400)
+    );
   }
-
-  if (schedule_time){
-    var scheduleTime = moment(schedule_time, "DD-MM-YYYY").toDate();
-    req.body.schedule_time = scheduleTime
+  if ("created_date" in req.body) {
+    // Remove the created_date from req.body if it exists
+    delete req.body.created_date;
   }
-
-  const doc = await WaterAndFootTracker.findByIdAndUpdate(id, req.body, {
+  const updateData = await WaterAndFootTracker.findByIdAndUpdate(id, req.body, {
     new: true,
-    // runValidators: true,
-    useFindAndModify: false,
-  }).then(()=>{
-    res.status(200).json({ success: true, message: "Updated Successfully" });
-  })
-  .catch((err)=>{
-    console.log(err)
-  })
-});
-
-//for single day only
-exports.getWaterAndFoot = catchAsyncError(async (req, res, next) => {
-  const { schedule_time } = req.body;
-  let scheduleTime = moment(schedule_time, "DD-MM-YYYY").toDate();
-  const WaterAndFoot = await WaterAndFootTracker.find({
-    schedule_time: scheduleTime,
-    $or: [
-      { created_by: req.user._id },
-      { user: req.user._id },
-      // Add more conditions as needed
-    ],
   });
-  res.status(200).json({success:true,data:WaterAndFoot})
+  if (!updateData)
+    return next(new ErrorHander("Faild: Data is Not Updated", 400));
+  else {
+    res.status(200).json({ success: true, updateData });
+  }
 });

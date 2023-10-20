@@ -53,7 +53,6 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     past_work_details,
   } = req.body;
 
-  console.log(req.body);
 
   const local_address = {
     address_line1: req.body["local_address[address_line1]"],
@@ -180,7 +179,7 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
       email
     );
 
-    if (!profile_picture_data.location) return next(new ErrorHander(data));
+    if (!profile_picture_data.location) return next(new ErrorHander("some error occured while uploading profile",400));
     newDietitian.profile_photo = profile_picture_data.location;
     newDietitian.profile_photo_key = profile_picture_data.key;
     console.log(

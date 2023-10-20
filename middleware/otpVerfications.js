@@ -23,10 +23,10 @@ exports.otpVerification = catchAsyncError ( async(req, res,next) => {
 	let phone = req.body.phone;
 	const hash = req.body.hash;
 	const otp = req.body.otp;
-	phone = "+91"+phone; 
 	if(!(phone && hash && otp) ){
-       return next(new ErrorHander("Please enter the credantials",400))
+		return next(new ErrorHander("Please enter the credantials",400))
 	}
+	phone = "+91"+phone; 
 	let [ hashValue, expires ] = hash.split('.');
 
 	let now = Date.now();
