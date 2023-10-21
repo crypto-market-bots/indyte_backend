@@ -123,6 +123,10 @@ const userSchema = new mongoose.Schema(
     skip_meals_frequency: {
       type: String, // Frequency of skipping meals or eating fast food
     },
+    skip_meal:{
+      type:Boolean, //
+
+    },
 
     //Bmi
     bmi: {
