@@ -1,5 +1,5 @@
 const express = require("express");
-const { sendOTP,getHistory } = require("../Common/controller");
+const { sendOTP,getHistory, uploadImage } = require("../Common/controller");
 
 const { isAuthenticated, authorizedRoles,verifyAndSendOTP } = require("../middleware/auth");
 
@@ -15,4 +15,5 @@ router
     getHistory
   );
 
+router.route("/upload-image").post(uploadImage);
 module.exports = router;

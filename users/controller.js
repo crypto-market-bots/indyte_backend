@@ -43,7 +43,7 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
     weight_unit, // Weight unit (lbs or kg)
     height_unit, // Height unit (cm or ft)
   } = req.body;
-  const { profile_image } = req.files;
+  const profile_image = req?.files?.profile_image;
 
   if (
     !email ||
@@ -108,21 +108,25 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   req.body.weight_unit = weight_unit;
   req.body.height_unit = height_unit;
   req.body.intial_weight = weight;
+  if (profile_image) {
+    const data = await uploadAndPushImage(
+      "user/profile",
+      profile_image,
+      "profile_image",
+      email
+    );
+    console.log(data);
+    if (!data.location) {
+      return next(new ErrorHander(data));
+    }
 
-  const data = await uploadAndPushImage(
-    "user/profile",
-    profile_image,
-    "profile_image",
-    email
-  );
-
-  if (!data.location) {
-    return next(new ErrorHander(data));
+    req.body.image = data.location;
+    req.body.profile_image_key = `user/profile/${data.key}`;
   }
-
-  req.body.image = data.location;
-  req.body.profile_image_key = `user/profile/${data.key}`;
-
+else {
+  req.body.image = process.env.DEFAULT_PROFILE_IMAGE_URL;
+ 
+}
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -270,13 +274,26 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
     occupation: "occupation",
     office_timing: "office_timing",
     location: "location",
-    lifestyle:"lifestyle"
+    lifestyle: "lifestyle",
+    height: "height",
+    full_name: "full_name",
+    gender: "gender",
+    dob: "dob",
+    current_weight: "current_weight",
+    goal_weight: "goal_weight",
+    initial_weight: "initial_weight",
+    goal: "goal",
+    physical_activity: "physical_activity",
+    weight_unit: "weight_unit",
+    skip_meal: "skip_meal",
+    bmi: "bmi",
   };
-   console.log(typeof req.body.lifestyle," ",req.body.lifestyle);
+  console.log(typeof req.body.lifestyle, " ", req.body.lifestyle);
   // Iterate through the mapping and update user properties
   for (const field in fieldMap) {
     if (req.body[field]) {
       user[fieldMap[field]] = req.body[field];
+      console.log(user[fieldMap[field]], " ", req.body[field]);
     }
   }
 
