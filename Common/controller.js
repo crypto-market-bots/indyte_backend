@@ -18,6 +18,7 @@ const client = require("twilio")(accountSid, authToken);
 
 const crypto = require("crypto");
 const { runInNewContext } = require("vm");
+const { uploadAndPushImage } = require("./uploadToS3");
 // const Seller = require("../models/sellerModel");
 const smsKey = process.env.SMS_SECRET_KEY;
 const twilioNum = process.env.TWILIO_PHONE_NUMBER;
@@ -120,5 +121,18 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
   }
 });
 
+
+exports.uploadImage = catchAsyncError(async(req,res,next)=>{
+
+ 
+
+  const data = await uploadAndPushImage(
+    "default/profile_image",
+    req.files.image,
+    "profile_image",
+    "indyte@example.com"
+  );
+  console.log(data);
+})
 
 
