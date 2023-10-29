@@ -258,7 +258,7 @@ exports.fetchUser = catchAsyncError(async (req, res, next) => {
           data: data,
         });
       } else if (type == "user") {
-        const data = await User.find({ type: "user" });
+        const data = await User.find();
         res.status(201).json({
           success: true,
           data: data,

@@ -31,15 +31,14 @@ exports.otpVerification = catchAsyncError ( async(req, res,next) => {
 
 	let now = Date.now();
 	if (now > parseInt(expires)) {
-		return next(new ErrorHander("Time out.",400));
+		return next(new ErrorHander("Otp Expire Please resend It .",400));
 	}
 	let data = `${phone}.${otp}.${expires}`;
 	let newCalculatedHash = crypto.createHmac('sha256', smsKey).update(data).digest('hex');
 	if (newCalculatedHash === hashValue) {
         next();
-		
 	} else {
-		 return next(new ErrorHander("Incorrect Crediantals",401));
+		 return next(new ErrorHander("Incorrect Otp ",401));
 	}
 });
 
