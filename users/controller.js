@@ -246,6 +246,7 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   if (req.files && req.files.profile_image) {
     try {
       const data = await uploadAndPushImage(
+        "user/profile",
         req.files.profile_image,
         "profile_image",
         user.email
