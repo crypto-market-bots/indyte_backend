@@ -11,15 +11,15 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
     const {
       workout_name,
       description,
-      "physical_equipments[]": physical_equipments,
+      physical_equipments,
       // physical_equipments,
       calorie_burn,
-      "exercises[]": exercises, //this was use to send array from postman (@Mohit)
+      exercises, //this was use to send array from postman (@Mohit)
     } = req.body;
 
     const { workout_image } = req.files;
-    console.log(req.body);
-    console.log(physical_equipments, "sssssss");
+    console.log("fjeijcrjecj", req.body);
+    console.log(physical_equipments, exercises, "sssssss");
     // Validate the presence of required fields
     if (
       !workout_name ||
@@ -46,16 +46,27 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
     const physical_equipmentsIds = physical_equipments;
 
     console.log(" got the ids");
-    const validExercises = await Exercise.find({ _id: { $in: exerciseIds } });
+    console.log(exerciseIds);
+    const validExercises = [];
+    for (const exerciseId of exerciseIds) {
+      const exercise = await Exercise.findOne({ _id: exerciseId });
+      if (exercise) {
+        validExercises.push(exercise);
+      }
+    }
 
     if (validExercises.length !== exerciseIds.length) {
       return next(new ErrorHander("Invalid exercise IDs in exercises", 400));
     }
 
-    const validEquipment = await PhysicalEquipment.find({
-      _id: { $in: physical_equipmentsIds },
-    });
+    const validEquipment = [];
 
+    for (const equipmentId of physical_equipmentsIds) {
+      const equipment = await PhysicalEquipment.findOne({ _id: equipmentId });
+      if (equipment) {
+        validEquipment.push(equipment);
+      }
+    }
     if (validEquipment.length !== physical_equipmentsIds.length) {
       return next(new ErrorHander("Invalid Equipment IDs in Equipments", 400));
     }

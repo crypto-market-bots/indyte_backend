@@ -263,7 +263,7 @@ exports.userMealRecommendationUpdate = catchAsyncError(
   }
 );
 
-exports.addMeal = (data) =>
+exports.addMeal = 
   catchAsyncError(async (req, res, next) => {
     try {
       console.log("add meal function Called");
@@ -311,7 +311,7 @@ exports.addMeal = (data) =>
         name
       );
 
-      if (!meal_image_data.location) return next(new ErrorHander(data));
+      if (!meal_image_data.location) return next(new ErrorHander("Couldn't Able to upload image"));
       newMeal.meal_image = meal_image_data.location;
       newMeal.meal_image_key = `images/meal${meal_image_data.key}`;
       console.log(
