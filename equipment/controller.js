@@ -3,12 +3,11 @@ const ErrorHander = require("../utils/errorhander");
 const PhysicalEquipment = require("./model");
 const { uploadAndPushImage } = require("../Common/uploadToS3");
 
-
 exports.AddEquipment = catchAsyncError(async (req, res, next) => {
   try {
     const { equipment_name } = req.body;
 
-    const {equipment_image}=req.files;
+    const { equipment_image } = req.files;
     if (!equipment_name || !equipment_image) {
       return next(new ErrorHander("All fields are required", 400));
     }
@@ -69,8 +68,6 @@ exports.AddEquipment = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
-
 exports.DeleteEquipment = catchAsyncError(async (req, res, next) => {
   const equipmentId = req.params.equipmentId; // Update the parameter name
   console.log("this is exercise id", equipmentId);
@@ -99,32 +96,28 @@ exports.DeleteEquipment = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
-
 exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
+  console.log("testing");
   try {
     const { equipment_name } = req.body;
     const equipmentId = req.params.equipmentId;
     const equipment_image = req?.files?.equipment_image;
     let updatedEquipment;
-     const updateData = {
-       equipment_name,
-       updated_by: req.user._id,
-     };
-    if (
-      !equipment_name
-    ) {
+    const updateData = {
+      equipment_name,
+      updated_by: req.user._id,
+    };
+    if (!equipment_name) {
       return next(new ErrorHander("All fields are required", 400));
     }
 
-    if(!equipment_image){
+    if (!equipment_image) {
       updatedEquipment = await PhysicalEquipment.findByIdAndUpdate(
         equipmentId,
         updateData,
         { new: true } // Return the updated document
       );
-    }
-    else{
+    } else {
       const updated_by = req.user._id;
 
       const equipment_image_data = await uploadAndPushImage(
@@ -146,10 +139,8 @@ exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
       );
     }
 
-    
-
     // Find the exercise by ID and update its fields
-    
+
     if (!updatedEquipment) {
       return next(new ErrorHander("Exercise not found", 404));
     }
@@ -165,9 +156,6 @@ exports.UpdateEquipment = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
-
-
 exports.FetchAllEquipment = catchAsyncError(async (req, res, next) => {
   const exercises = await PhysicalEquipment.find();
   res.status(200).json({
@@ -176,7 +164,6 @@ exports.FetchAllEquipment = catchAsyncError(async (req, res, next) => {
     data: exercises,
   });
 });
-
 
 exports.FetchEquipment = catchAsyncError(async (req, res, next) => {
   const equipmentId = req.params.equipmentId;

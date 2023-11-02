@@ -12,7 +12,11 @@ const router = express.Router();
 
 router
   .route("/add-equipment")
-  .post(isAuthenticated("web"), authorizedRoles("admin",'dietitian'), AddEquipment);
+  .post(
+    isAuthenticated("web"),
+    authorizedRoles("admin", "dietitian"),
+    AddEquipment
+  );
 
 router
   .route("/delete-equipment/:equipmentId")
@@ -22,13 +26,7 @@ router
     DeleteEquipment
   );
 
-router
-  .route("/update-equipment/:equipmentId")
-  .put(
-    isAuthenticated("web"),
-    authorizedRoles("admin", "dietitian"),
-    UpdateEquipment
-  );
+router.route("/update-equipment").put(UpdateEquipment);
 
 router
   .route("/equipment")
@@ -45,8 +43,5 @@ router
     authorizedRoles("admin", "dietitian"),
     FetchEquipment
   );
-
-
-
 
 module.exports = router;

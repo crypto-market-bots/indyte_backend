@@ -18,7 +18,15 @@ const exerciseSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  timetoperform: {
+    type: String,
+    required: true,
+  },
   calorie_burn: {
+    type: Number,
+    required: true,
+  },
+  timetoperform: {
     type: Number,
     required: true,
   },
@@ -61,4 +69,4 @@ const exerciseSchema = new mongoose.Schema({
 
 const Exercise = mongoose.model("Exercise", exerciseSchema);
 
-module.exports = {Exercise};
+module.exports = { Exercise };
