@@ -11,11 +11,10 @@ const imageName = new mongoose.Schema(
     },
     name: {
       type: String,
-      required: true,
     },
     type: {
       type: String,
-      enum:["goal","lifestyle","physicalActivities"],
+      enum: ["goal", "lifestyle", "physicalActivities", "banner"],
       required: true,
     },
   },

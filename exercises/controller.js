@@ -13,6 +13,7 @@ exports.createExercise = catchAsyncError(async (req, res, next) => {
       description,
       ytlink1,
       calorie_burn,
+      timetoperform,
       repetition,
     } = req.body;
 
@@ -34,6 +35,7 @@ exports.createExercise = catchAsyncError(async (req, res, next) => {
       !difficulty_level ||
       !description ||
       !ytlink1 ||
+      !timetoperform ||
       !calorie_burn ||
       !repetition ||
       !exercise_image
@@ -60,6 +62,7 @@ exports.createExercise = catchAsyncError(async (req, res, next) => {
       calorie_burn,
       repetition,
       exercise_image,
+      timetoperform,
       steps,
       created_by,
     });
