@@ -34,6 +34,7 @@
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.4",
     "mongoose": "^7.3.0",
+    "node-cron": "^3.0.2",
     "nodemon": "^2.0.22",
     "twilio": "^4.12.0",
     "validator": "^13.9.0"

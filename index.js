@@ -1,6 +1,9 @@
 const app = require("./app.js");
 const dotenv = require("dotenv");
 const connectDatabase = require("./connectDatabase");
+const newCron =require('./cron.js')
+
+newCron.updateMealStatus()
 
 const server = app.listen(8080, () => {
   console.log(`Server is port on the ${8080}`);
