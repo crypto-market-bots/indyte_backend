@@ -1,9 +1,13 @@
 const express = require('express');
+const moment = require("moment");
+
 const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
 const {
   updateMyWeight,
   updateWeightStatus,
+  handlingUpdateValidation,
   getWeight,
+  configuringApprovedActions,
 
 } = require("../weightTracker/controller");
 
@@ -26,7 +30,9 @@ router
   .put(
     isAuthenticated("web"),
     authorizedRoles("dietitian", "admin"),
-    updateWeightStatus
+    handlingUpdateValidation,
+    updateWeightStatus,
+    configuringApprovedActions
   );
 
 router

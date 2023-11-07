@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
-const WeightTracker = new mongoose.Schema(
+const WeightTrackerSchema = new mongoose.Schema(
   {
-    user_id: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     },
     current_weight: {
@@ -14,6 +14,11 @@ const WeightTracker = new mongoose.Schema(
     goal_weight: {
       type: String,
       required: true,
+    },
+    isCompleted: {
+      type: Boolean,
+      required: true,
+      default:false
     },
     proof_image: {
       type: String,
@@ -37,6 +42,6 @@ const WeightTracker = new mongoose.Schema(
   { timestamps: true }
 );
 
-const PhysicalEquipment = mongoose.model("WeightTracker", WeightTracker);
+const WeightTracker = mongoose.model("WeightTracker", WeightTrackerSchema);
 
-module.exports = PhysicalEquipment;
+module.exports = {WeightTracker};

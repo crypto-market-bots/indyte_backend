@@ -3,6 +3,7 @@ const catchAsyncError = require("../middleware/catchAsyncError");
 const User = require("../users/model");
 const { Meal, UserMealRecommendation } = require("../mealPlanner/model");
 const { Workout, workoutRecommendation } = require("../workoutTracker/model");
+const { WeightTracker, } = require("../weightTracker/model");
 const { ObjectId } = require("mongodb");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
@@ -80,12 +81,34 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
       console.log("into workout Block");
       DatabaseName = workoutRecommendation;
       populationKeyName = "workout_id";
+      historyData = await DatabaseName.find({
+        $or: [{ user: user_id }],
+      })
+        .populate(populationKeyName)
+        .populate("assigned_by", "first_name last_name")
+        .skip(skip) // Skip the appropriate number of documents
+        .limit(per_page);
     } else if (type === "meal") {
       console.log("into Meal Block");
-
       DatabaseName = UserMealRecommendation;
       populationKeyName = "meal";
-    } else {
+      historyData = await DatabaseName.find({
+        $or: [{ user: user_id }],
+      })
+        .populate(populationKeyName)
+        .populate("assigned_by", "first_name last_name")
+        .skip(skip) // Skip the appropriate number of documents
+        .limit(per_page);
+    }else if(type === "weight"){
+      console.log("into weight block")
+      DatabaseName= WeightTracker
+      historyData = await DatabaseName.find({
+        $or: [{ user: user_id }],
+      })
+        .skip(skip) // Skip the appropriate number of documents
+        .limit(per_page);
+    }
+     else {
       console.log("into meal Block");
       DatabaseName = UserMealRecommendation;
       populationKeyName = "meal";
@@ -95,13 +118,7 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
       $or: [{ user: user_id }],
     });
 
-    historyData = await DatabaseName.find({
-      $or: [{ user: user_id }],
-    })
-      .populate(populationKeyName)
-      .populate("assigned_by", "first_name last_name")
-      .skip(skip) // Skip the appropriate number of documents
-      .limit(per_page);
+   
 
     res.status(200).json({
       success: true,

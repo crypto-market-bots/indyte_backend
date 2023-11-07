@@ -91,6 +91,8 @@ router
     authorizedRoles("dietitian", "admin"),
     allMealsFetch
   );
+
+  
 router
   .route("/meals/:id")
   .get(
