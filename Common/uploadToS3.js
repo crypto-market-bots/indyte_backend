@@ -21,7 +21,7 @@ async function uploadAndPushImage(folder,image, imageName, unique_parameter) {
       const key = `${imageName}-${unique_parameter}-${randomNumber}`;
       const imageData = fs.readFileSync(image.tempFilePath);
       const uploadParams = {
-        Bucket: `indyte-static-images/${folder}`,
+        Bucket: `indyte-static-images-new/${folder}`,
         Key: key,
         Body: imageData,
         ACL: "public-read",
@@ -57,7 +57,7 @@ async function deleteS3Object(key) {
   console.log(key);
   return new Promise((resolve, reject) => {
     const params = {
-      Bucket: "indyte-static-images",
+      Bucket: "indyte-static-images-new",
       Key: key,
     };
     s3.deleteObject(params, (err, data) => {

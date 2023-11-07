@@ -5,6 +5,43 @@ const dietitian = require("../dietitian/model");
 const User = require("../users/model");
 // const Seller = require("../models/sellerModel");
 
+exports.verifyAndSendOTP = catchAsyncError(async (req, res, next) => {
+  const { type, phone } = req.body;
+  console.log(req.body);
+
+  if (!req.body.phone) {
+    return next(
+      new ErrorHander("Please enter the phone number for sending the OTP")
+    );
+  }
+
+  req.phone = phone;
+
+
+
+  if (!type || (type !== "LOGIN" && type !== "REGISTRATION")) {
+    return next(
+      new ErrorHander("Please Specify Type (LOGIN, REGISTRATION)")
+    );
+  }
+
+  const user = await User.findOne({ phone: phone });
+
+  if (type === "LOGIN" && !user) {
+    return next(new ErrorHander("User Is not registered", 400));
+  }
+
+  if (type === "REGISTRATION" && user) {
+    return next(new ErrorHander("User Already exists and is valid", 400));
+  }
+
+  // If none of the error conditions are met, proceed with sending OTP
+  next();
+
+  
+});
+
+
 exports.verifyExistenceUser = catchAsyncError(async (req, res, next) => {
   const email = req.body.email;
   const phone = req.body.phone;
@@ -71,7 +108,7 @@ exports.isAuthenticated = (role) => catchAsyncError(async (req, res, next) => {
 });
 
 exports.authorizedRoles = (...roles) => {
-  console.log("authorized also called")
+  // console.log("authorized also called")
   return (req, res, next) => {
       if (!roles.includes(req.user.type)) {
         return next(
@@ -83,3 +120,6 @@ exports.authorizedRoles = (...roles) => {
       next();
     }
   }
+
+
+  

@@ -2,74 +2,74 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
-
-
 const userSchema = new mongoose.Schema(
   {
     // Full Name
     full_name: {
       type: String,
       trim: true,
-      required: [true, 'Please Enter your Full Name'],
+      required: [true, "Please Enter your Full Name"],
     },
 
     // Basic User Information
     email: {
       type: String,
-      required: [true, 'Please Enter your email'],
+      required: [true, "Please Enter your email"],
       trim: true,
       unique: true,
-      validate: [validator.isEmail, 'Please Enter a valid email'],
+      validate: [validator.isEmail, "Please Enter a valid email"],
     },
     phone: {
       type: String,
-      required: [true, 'Please Enter your Phone Number'],
+      required: [true, "Please Enter your Phone Number"],
       unique: true,
-      minLength: [10, 'Phone Number should be 10 Numbers'],
-      maxLength: [10, 'Phone Number should be 10 Numbers'],
+      minLength: [10, "Phone Number should be 10 Numbers"],
+      maxLength: [10, "Phone Number should be 10 Numbers"],
     },
     password: {
       type: String,
-      required: [true, 'Please Enter the password'],
+      required: [true, "Please Enter the password"],
       trim: true,
-      minLength: [6, 'Password should be at least 6 characters'],
+      minLength: [6, "Password should be at least 6 characters"],
       select: false, // To exclude the password field by default in query results
     },
 
     // Personal Information
     gender: {
       type: String,
-      required: [true, 'Please Enter your Gender'],
+      required: [true, "Please Enter your Gender"],
       trim: true,
     },
     dob: {
       type: Date,
-      required: [true, 'Please Enter your Date of Birth'],
+      required: [true, "Please Enter your Date of Birth"],
     },
     current_weight: {
       type: Number,
-      required: [true, 'Please Enter your current weight in Kg'],
+      required: [true, "Please Enter your current weight in Kg"],
     },
     goal_weight: {
       type: Number,
-      required: [true, 'Please Enter your goal weight in Kg'],
+      required: [true, "Please Enter your goal weight in Kg"],
     },
     intial_weight: {
       type: Number,
-      required: [true, 'Please Enter your goal weight in '],
+      required: [true, "Please Enter your goal weight in "],
     },
     height: {
       type: Number,
-      required: [true, 'Please Enter your height in cm'],
+      required: [true, "Please Enter your height in cm"],
     },
     goal: {
       type: String,
-      required: [true, 'Please Enter your fitness goal'],
+      required: [true, "Please Enter your fitness goal"],
     },
     profile_image_key: {
       type: String, // Store the image reference/key here
     },
-
+    image: {
+      type: String, // Store the image reference/key here
+    },
     dietitian: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "dietitian", // Reference to the Dietitian model (replace "Dietitian" with the actual model name)
@@ -91,15 +91,15 @@ const userSchema = new mongoose.Schema(
     //units
     weight_unit: {
       type: String,
-      enum: ['lbs', 'kg'], // Add more options if needed
-      required: [true, 'Please select weight unit preference'],
+      enum: ["lbs", "kg"], // Add more options if needed
+      required: [true, "Please select weight unit preference"],
     },
 
     // Height Unit Preference (cm or ft)
     height_unit: {
       type: String,
-      enum: ['cm', 'ft'], // Add more options if needed
-      required: [true, 'Please select height unit preference'],
+      enum: ["cm", "ft"], // Add more options if needed
+      required: [true, "Please select height unit preference"],
     },
 
     // Dietary Preferences and Health
@@ -123,12 +123,14 @@ const userSchema = new mongoose.Schema(
     skip_meals_frequency: {
       type: String, // Frequency of skipping meals or eating fast food
     },
+    skip_meal: {
+      type: Boolean, //
+    },
 
     //Bmi
     bmi: {
       type: Number, // Store BMI here
     },
-
 
     // Work and Location
     occupation: {
@@ -149,8 +151,6 @@ const userSchema = new mongoose.Schema(
 userSchema.path("phone").validate(function validatePhone() {
   return this.phone > 999999999 && this.phone <= 9999999999;
 });
-
-
 
 // const User = mongoose.model("User", );
 // const dietitian = mongoose.model("dietitian", dietitianSchema);

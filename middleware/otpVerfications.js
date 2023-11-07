@@ -23,23 +23,22 @@ exports.otpVerification = catchAsyncError ( async(req, res,next) => {
 	let phone = req.body.phone;
 	const hash = req.body.hash;
 	const otp = req.body.otp;
-	phone = "+91"+phone; 
 	if(!(phone && hash && otp) ){
-       return next(new ErrorHander("Please enter the credantials",400))
+		return next(new ErrorHander("Please enter the credantials",400))
 	}
+	phone = "+91"+phone; 
 	let [ hashValue, expires ] = hash.split('.');
 
 	let now = Date.now();
 	if (now > parseInt(expires)) {
-		return next(new ErrorHander("Time out.",400));
+		return next(new ErrorHander("Otp Expire Please resend It .",400));
 	}
 	let data = `${phone}.${otp}.${expires}`;
 	let newCalculatedHash = crypto.createHmac('sha256', smsKey).update(data).digest('hex');
 	if (newCalculatedHash === hashValue) {
         next();
-		
 	} else {
-		 return next(new ErrorHander("Incorrect Crediantals",401));
+		 return next(new ErrorHander("Incorrect Otp ",401));
 	}
 });
 

@@ -1,11 +1,11 @@
 const express = require("express");
-const { sendOTP,getHistory } = require("../Common/controller");
+const { sendOTP,getHistory, uploadImage } = require("../Common/controller");
 
-const { isAuthenticated, authorizedRoles } = require("../middleware/auth");
+const { isAuthenticated, authorizedRoles,verifyAndSendOTP } = require("../middleware/auth");
 
 
 const router = express.Router();
-router.route("/sendotp").post(sendOTP);
+router.route("/sendotp").post(verifyAndSendOTP,sendOTP);
 
 router
   .route("/get-history")
@@ -15,4 +15,5 @@ router
     getHistory
   );
 
+router.route("/upload-image").post(uploadImage);
 module.exports = router;

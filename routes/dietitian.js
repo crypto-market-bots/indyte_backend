@@ -5,6 +5,7 @@ const {
   DietitianUpdation,
   fetchUser,
   fetchUserDetail,
+  resetPassword,
 } = require("../dietitian/controller");
 
 const { assignDietitian } = require("../dietitian/controller");
@@ -28,7 +29,9 @@ router
     .route("/update-dietitian/:id")
     .post(isAuthenticated("web"), authorizedRoles("admin"), DietitianUpdation);
 
-
+    router
+    .route("/reset-password")
+    .patch(isAuthenticated("web"), authorizedRoles("admin"), resetPassword);
 
 
 router

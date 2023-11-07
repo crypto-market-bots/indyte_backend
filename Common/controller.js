@@ -3,7 +3,8 @@ const catchAsyncError = require("../middleware/catchAsyncError");
 const User = require("../users/model");
 const { Meal, UserMealRecommendation } = require("../mealPlanner/model");
 const { Workout, workoutRecommendation } = require("../workoutTracker/model");
-const { ObjectId } = require('mongodb');
+const { WeightTracker, } = require("../weightTracker/model");
+const { ObjectId } = require("mongodb");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
@@ -13,22 +14,21 @@ const jwt = require("jsonwebtoken");
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_TOKEN;
-
+console.log(accountSid, authToken);
 const client = require("twilio")(accountSid, authToken);
 
 const crypto = require("crypto");
 const { runInNewContext } = require("vm");
+const { uploadAndPushImage } = require("./uploadToS3");
 // const Seller = require("../models/sellerModel");
 const smsKey = process.env.SMS_SECRET_KEY;
 const twilioNum = process.env.TWILIO_PHONE_NUMBER;
-//Send the otp
+
 exports.sendOTP = catchAsyncError(async (req, res, next) => {
-  if (!req.body.phone)
-    return next(
-      new ErrorHander("Please enter the phone number for send the otp")
-    );
-  const phone = "+91" + req.body.phone;
+  // const phone = req.phone;
+  const phone = "+91" + req.phone;
   // phone =+phone;
+  console.log("these are envs", accountSid, authToken);
 
   const otp = Math.floor(100000 + Math.random() * 900000);
 
@@ -49,12 +49,12 @@ exports.sendOTP = catchAsyncError(async (req, res, next) => {
       res.status(200).send({ phone, hash: fullHash });
     })
     .catch((err) => {
+      console.log(err);
       return next(new ErrorHander(err, 400));
     });
 
-  // res.status(200).send({ phone, hash: fullHash, otp });
-  // this bypass otp via api only for development instead hitting twilio api all the time
-  // Use this way in Production
+  // If none of the error conditions are met, proceed with sending OTP
+  // next();
 });
 
 exports.getHistory = catchAsyncError(async (req, res, next) => {
@@ -64,8 +64,8 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
     const per_page = parseInt(req.query.perPage) || 10;
     const skip = (page - 1) * per_page;
 
-    console.log("body",req.body)
-    
+    console.log("body", req.body);
+
     if (!user_id || !type) {
       return next(new ErrorHander("All field are required ", 400));
     }
@@ -74,35 +74,51 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
       return next(new ErrorHander("Invalid user_id", 400));
     }
 
-    let historyData
+    let historyData;
 
     let DatabaseName;
-    if(type==="workout"){
-      console.log("into workout Block")
-      DatabaseName=workoutRecommendation
-      populationKeyName='workout_id'
+    if (type === "workout") {
+      console.log("into workout Block");
+      DatabaseName = workoutRecommendation;
+      populationKeyName = "workout_id";
+      historyData = await DatabaseName.find({
+        $or: [{ user: user_id }],
+      })
+        .populate(populationKeyName)
+        .populate("assigned_by", "first_name last_name")
+        .skip(skip) // Skip the appropriate number of documents
+        .limit(per_page);
+    } else if (type === "meal") {
+      console.log("into Meal Block");
+      DatabaseName = UserMealRecommendation;
+      populationKeyName = "meal";
+      historyData = await DatabaseName.find({
+        $or: [{ user: user_id }],
+      })
+        .populate(populationKeyName)
+        .populate("assigned_by", "first_name last_name")
+        .skip(skip) // Skip the appropriate number of documents
+        .limit(per_page);
+    }else if(type === "weight"){
+      console.log("into weight block")
+      DatabaseName= WeightTracker
+      historyData = await DatabaseName.find({
+        $or: [{ user: user_id }],
+      })
+        .skip(skip) // Skip the appropriate number of documents
+        .limit(per_page);
     }
-    else if(type==="meal"){
-      console.log("into Meal Block")
-      
-      DatabaseName=UserMealRecommendation
-      populationKeyName='meal'
-    }
-    else{
-      console.log("into meal Block")
-      DatabaseName=UserMealRecommendation
-      populationKeyName='meal'
+     else {
+      console.log("into meal Block");
+      DatabaseName = UserMealRecommendation;
+      populationKeyName = "meal";
     }
 
     const totalResultLength = await DatabaseName.countDocuments({
       $or: [{ user: user_id }],
     });
-    
-    historyData = await DatabaseName.find({
-      $or: [{ user: user_id }],
-    }).populate(populationKeyName)
-    .skip(skip) // Skip the appropriate number of documents
-    .limit(per_page);
+
+   
 
     res.status(200).json({
       success: true,
@@ -113,4 +129,14 @@ exports.getHistory = catchAsyncError(async (req, res, next) => {
     // Handle any error that occurred during the process
     return next(new ErrorHander(error.message, 500));
   }
+});
+
+exports.uploadImage = catchAsyncError(async (req, res, next) => {
+  const data = await uploadAndPushImage(
+    "default/profile_image",
+    req.files.image,
+    "profile_image",
+    "indyte@example.com"
+  );
+  console.log(data);
 });

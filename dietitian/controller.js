@@ -4,6 +4,8 @@ const User = require("../users/model");
 const dietitian = require("../dietitian/model");
 const { uploadAndPushImage } = require("../Common/uploadToS3");
 const bcrypt = require("bcryptjs");
+const mongoose = require('mongoose');
+
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const AWS = require("aws-sdk");
@@ -53,7 +55,6 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     past_work_details,
   } = req.body;
 
-  console.log(req.body);
 
   const local_address = {
     address_line1: req.body["local_address[address_line1]"],
@@ -180,7 +181,7 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
       email
     );
 
-    if (!profile_picture_data.location) return next(new ErrorHander(data));
+    if (!profile_picture_data.location) return next(new ErrorHander("some error occured while uploading profile",400));
     newDietitian.profile_photo = profile_picture_data.location;
     newDietitian.profile_photo_key = profile_picture_data.key;
     console.log(
@@ -242,6 +243,63 @@ exports.DietitianUpdation = catchAsyncError(async (req, res, next) => {
   }
 });
 
+exports.resetPassword = catchAsyncError(async (req, res, next) => {
+  const {dietitianId,password,confirm_password} = req.body; 
+
+
+  if (!dietitianId ||! password ||! confirm_password) {
+    return next(new ErrorHander("All fields are required", 400));
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(dietitianId)) {
+    return next(new ErrorHander("Invalid Dietitian ID", 400));
+  }
+
+  if(password!==confirm_password){
+    return next(new ErrorHander("Password and confirm password Must be Same", 400));
+  }
+
+  let trimmedPassword = password.trim();
+
+  if (trimmedPassword.length < 6) {
+    return next(
+      new ErrorHander(
+        "Password should be greater than or equal to 6 Characters",
+        400
+      )
+    );
+  }
+
+
+  try {
+    const dietitianDetail = await dietitian.findOne(
+      { _id: dietitianId, type: 'dietitian' }
+    );
+
+    if (!dietitianDetail) {
+      return next(new ErrorHander("Dietitian not found", 404));
+    }
+
+    
+  const salt = await bcrypt.genSalt(10);
+  const hashPassword = await bcrypt.hash(trimmedPassword, salt);
+
+    const updatePasswordDetail = await dietitian.findOneAndUpdate(
+      { _id: dietitianId }, // The condition to find the document
+      { $set: { password: hashPassword } }, // The field to be updated
+      { new: true } // To return the updated document
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Dietitian Password updated successfully",
+  
+    });
+  } catch (error) {
+    return next(new ErrorHander(error.message, 400));
+  }
+});
+
 exports.fetchUser = catchAsyncError(async (req, res, next) => {
   const type = req.query.type;
   const mode = req.user.type;
@@ -259,7 +317,7 @@ exports.fetchUser = catchAsyncError(async (req, res, next) => {
           data: data,
         });
       } else if (type == "user") {
-        const data = await User.find({ type: "user" });
+        const data = await User.find();
         res.status(201).json({
           success: true,
           data: data,

@@ -30,7 +30,7 @@ exports.newProgress = catchAsyncError(async (req, res, next) => {
 
         // console.log(image.data.buffer)
         const uploadParams = {
-          Bucket: "indyte-static-images",
+          Bucket: "indyte-static-images-new",
           Key: `${progress_month_year}/${user._id}-${imageName}/${user._id}`,
           Body: imageData,
         
@@ -125,7 +125,7 @@ exports.updateProgress = catchAsyncError(async (req, res, next) => {
     if (image) {
       try {
         const uploadParams = {
-          Bucket: "indyte-static-images",
+          Bucket: "indyte-static-images-new",
           Key: `${progress.progress_month_year}/${user._id}-${imageName}`,
           Body: Buffer.from(image.data),
           ContentType: image.mimetype,
@@ -138,7 +138,7 @@ exports.updateProgress = catchAsyncError(async (req, res, next) => {
         // Delete the previous image if it exists
         if (progress.images[imageName]) {
           const params = {
-            Bucket: "indyte-static-images",
+            Bucket: "indyte-static-images-new",
             Key: progress.images[imageName].split("/").pop(),
           };
           await s3.deleteObject(params).promise();

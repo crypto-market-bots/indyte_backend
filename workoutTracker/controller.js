@@ -9,20 +9,20 @@ const ErrorHander = require("../utils/errorhander");
 exports.createWorkout = catchAsyncError(async (req, res, next) => {
   try {
     const {
-      workout_name,
+      name,
       description,
-      "physical_equipments[]": physical_equipments,
+      physical_equipments,
       // physical_equipments,
       calorie_burn,
-      "exercises[]": exercises, //this was use to send array from postman (@Mohit)
+      exercises, //this was use to send array from postman (@Mohit)
     } = req.body;
 
     const { workout_image } = req.files;
-    console.log(req.body);
-    console.log(physical_equipments, "sssssss");
+    console.log("fjeijcrjecj", req.body);
+    console.log(physical_equipments, exercises, "sssssss");
     // Validate the presence of required fields
     if (
-      !workout_name ||
+      !name ||
       !description ||
       !workout_image ||
       !physical_equipments ||
@@ -33,7 +33,7 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
     }
 
     const sameWorkout = await Workout.findOne({
-      name: workout_name,
+      name: name,
     });
     if (sameWorkout) {
       console.log("workout With same name already exist ", sameWorkout);
@@ -42,27 +42,36 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
       );
     }
 
-    const exerciseIds = exercises;
-    const physical_equipmentsIds = physical_equipments;
+    var exerciseIds = JSON.parse(exercises);
+    var physical_equipmentsIds = JSON.parse(physical_equipments);
 
-    console.log(" got the ids");
-    const validExercises = await Exercise.find({ _id: { $in: exerciseIds } });
+    const validExercises = [];
+    for (const exerciseId of exerciseIds) {
+      const exercise = await Exercise.findOne({ _id: exerciseId });
+      if (exercise) {
+        validExercises.push(exercise);
+      }
+    }
 
     if (validExercises.length !== exerciseIds.length) {
       return next(new ErrorHander("Invalid exercise IDs in exercises", 400));
     }
 
-    const validEquipment = await PhysicalEquipment.find({
-      _id: { $in: physical_equipmentsIds },
-    });
+    const validEquipment = [];
 
+    for (const equipmentId of physical_equipmentsIds) {
+      const equipment = await PhysicalEquipment.findOne({ _id: equipmentId });
+      if (equipment) {
+        validEquipment.push(equipment);
+      }
+    }
     if (validEquipment.length !== physical_equipmentsIds.length) {
       return next(new ErrorHander("Invalid Equipment IDs in Equipments", 400));
     }
 
     console.log(" pass through validation");
     const workout = new Workout({
-      workout_name,
+      name,
       description,
       physical_equipments: validEquipment,
       calorie_burn,
@@ -75,17 +84,12 @@ exports.createWorkout = catchAsyncError(async (req, res, next) => {
       "images/workout",
       workout_image,
       "workout_image",
-      workout_name
+      name
     );
 
     if (!workout_image_data.location) return next(new ErrorHander(data));
     workout.workout_image = workout_image_data.location;
     workout.workout_image_key = `images/workout${workout_image_data.key}`;
-    console.log(
-      "req.body.image",
-      workout_image_data.location,
-      workout_image_data.key
-    );
 
     // Save the workout to the database
     const savedWorkout = await workout.save();
@@ -123,36 +127,40 @@ exports.deleteWorkout = catchAsyncError(async (req, res, next) => {
 exports.updateWorkout = catchAsyncError(async (req, res, next) => {
   try {
     const {
-      workout_name,
+      name,
       description,
-      "physical_equipments[]": physical_equipments,
+      physical_equipments,
       // physical_equipments,
       calorie_burn,
-      "exercises[]": exercises, //this was use to send array from postman (@Mohit)
+      exercises, //this was use to send array from postman (@Mohit)
     } = req.body;
+    const workout_image = req.files?.workout_image;
 
     const workoutId = req.params.workoutId;
+    const workout = await Workout.findById(workoutId);
 
-    console.log("Workout started ", workoutId);
+    const formattedExercises = JSON.parse(req.body.exercises);
+    const formattedPhysicalEquipments = JSON.parse(
+      req.body.physical_equipments
+    );
 
-    const workout_image = req?.files?.workout_image;
     let updateWorkout;
     if (
-      !workout_name ||
+      !name ||
       !description ||
-      !physical_equipments ||
+      !formattedPhysicalEquipments.length ||
       !calorie_burn ||
-      !exercises
+      !formattedExercises.length
     ) {
       return next(new ErrorHander("All fields are required", 400));
     }
 
     const updateData = {
-      workout_name,
+      name,
       description,
-      physical_equipments,
+      physical_equipments: formattedPhysicalEquipments,
       calorie_burn,
-      exercises,
+      exercises: formattedExercises,
       updated_by: req.user._id,
     };
 
@@ -167,7 +175,7 @@ exports.updateWorkout = catchAsyncError(async (req, res, next) => {
         "images/workout",
         workout_image,
         "workout_image",
-        workout_name
+        name
       );
 
       if (!workout_image_data.location) return next(new ErrorHander(data));
@@ -289,7 +297,8 @@ exports.fetchExercise = catchAsyncError(async (req, res, next) => {
 
 exports.fetchWorkout = catchAsyncError(async (req, res, next) => {
   // api for customers and meal planner
-  const workoutRecommendationId = req.query.workoutId;
+  console.log("called fetchworkout");
+  const workoutRecommendationId = req.params.workoutId;
 
   if (workoutRecommendationId) {
     Workout.findById(workoutRecommendationId)

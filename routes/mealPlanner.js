@@ -38,6 +38,7 @@ router
     authorizedRoles("dietitian"),
     userMealRecommendationUpdate
   );
+  
 router
   .route("/delete-user-meal-recommendation/:Id")
   .delete(
@@ -90,6 +91,8 @@ router
     authorizedRoles("dietitian", "admin"),
     allMealsFetch
   );
+
+  
 router
   .route("/meals/:id")
   .get(
