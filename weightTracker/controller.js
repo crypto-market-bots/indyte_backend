@@ -216,14 +216,13 @@ exports.getWeight = catchAsyncError(async (req, res, next) => {
     }
 
     let weightTrackerData;
+    let filter = { user: id };
 
-    if (type === "rejected") {
-      console.log("All condtition triggered");
-      weightTrackerData = await WeightTracker.find({
-        user: id,
-      });
-    } else if (type === "approved") {
-      console.log(value);
+    if (type === "rejected" || type === "approved" || type === "edit" || type === "pending") {
+      filter.status = type;
+    }
+
+    if (type === "approved" && value) {
       const requestedDate = new Date(value);
       const startOfDay = new Date(requestedDate);
       startOfDay.setHours(0, 1, 0, 0); // Set to 00:01 of the requested day
@@ -234,16 +233,24 @@ exports.getWeight = catchAsyncError(async (req, res, next) => {
       console.log("startOfDay:", startOfDay);
       console.log("endOfDay:", endOfDay);
 
-      weightTrackerData = await WeightTracker.find({
-        user: id,
-        createdAt: { $gte: startOfDay, $lte: endOfDay },
-      });
-    } else {
-      weightTrackerData = await WeightTracker.find({
-        user: id,
-        createdAt: { $gte: startOfDay, $lte: endOfDay },
-      });
+      filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    } else if (value) {
+      // If type is not "approved" but date is provided
+      const requestedDate = new Date(value);
+      const startOfDay = new Date(requestedDate);
+      startOfDay.setHours(0, 1, 0, 0); // Set to 00:01 of the requested day
+
+      const endOfDay = new Date(requestedDate);
+      endOfDay.setHours(23, 59, 59, 999); // Set to 23:59 of the requested day
+
+      console.log("startOfDay:", startOfDay);
+      console.log("endOfDay:", endOfDay);
+
+      filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
+
+    weightTrackerData = await WeightTracker.find(filter).skip(skip).limit(per_page);
+
     res.status(201).json({
       success: true,
       message: "Success",
@@ -253,6 +260,7 @@ exports.getWeight = catchAsyncError(async (req, res, next) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // exports.userMealRecommendationFetch = catchAsyncError(
 //   async (req, res, next) => {

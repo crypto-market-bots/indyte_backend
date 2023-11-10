@@ -26,8 +26,6 @@ router
     updateMyWeight
   );
 
-
-
 ///Web 
 router
   .route("/update-weight-status")
@@ -48,6 +46,7 @@ router
     getWeight
   );
 
+  
 // router.route("/fetch-workout").get(isAuthenticated, fetchWorkout);
 
 module.exports = router

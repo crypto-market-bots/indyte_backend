@@ -7,8 +7,9 @@ const updateMealStatus = () => {
   console.log(currentTime);
   
   try {
-    var task = cron.schedule('50 10 * * *', () =>  {
+    var task = cron.schedule('53 22 * * *', () =>  {
       console.log('will execute every minute until stopped');
+
     });
   } catch (error) {
     console.log('Error in scheduling the cron job:', error);
