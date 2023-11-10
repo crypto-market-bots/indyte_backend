@@ -31,7 +31,7 @@ const WeightTrackerSchema = new mongoose.Schema(
     status:{
       type: String,
       required: [true, "Please enter The proper type Type"],
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending","approved","rejected","edit"],
     },
     updated_by: {
       type: mongoose.Schema.Types.ObjectId,

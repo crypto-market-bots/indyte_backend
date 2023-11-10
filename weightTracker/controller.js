@@ -55,66 +55,154 @@ exports.updateMyWeight = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
 exports.handlingUpdateValidation = catchAsyncError(async (req, res, next) => {
-  const {status,id} = req.body;
-  
-  if (!status || !id) {
-    return next(new ErrorHander("All field are required",500))
+  const { status, user_id, goal_weight, current_weight, weight_tracking_id } =
+    req.body;
+
+  if (!status || !weight_tracking_id) {
+    return next(new ErrorHander("All field are required", 500));
   }
 
-  if(status!=="pending" && status!=="approved" && status=="rejected"){
-    return next(new ErrorHander("Invalid status",500))
-  } 
-});
-
-
-
-exports.updateWeightStatus = catchAsyncError(async (req, res, next) => {
-  // api for customers and meal planner
-  const {status,id,goal_weight,current_weight} = req.body;
-  
-  if (!status || !id) {
-    return next(new ErrorHander("All field are required",500))
+  if (status !== "edit" && status !== "approved" && status !== "rejected") {
+    return next(new ErrorHander("Invalid status", 500));
   }
 
-  if(status!=="pending" && status!=="approved" && status=="rejected"){
-    return next(new ErrorHander("Invalid status",500))
-  } 
-
-
+  if (
+    (status === "edit" && status === "pending") ||
+    !goal_weight ||
+    !current_weight ||
+    !user_id ||
+    !weight_tracking_id
+  ) {
+    return next(
+      new ErrorHander("Please Provide All field for this Action ", 500)
+    );
+  }
+  console.log("passed throught validation ");
+  next();
 });
 
+exports.configuringRejectedActions = catchAsyncError(async (req, res, next) => {
+  const { status, weight_tracking_id } = req.body;
+  if (status === "rejected") {
+    console.log("status is reject and it is being rejected now ");
+    //set status to rejected in app
+    const WeightUpdate = await WeightTracker.findOneAndUpdate(
+      { _id: weight_tracking_id },
+      { $set: { status: "rejected" } }, // Update fields
+      { new: true }
+    );
+    res.status(201).json({
+      success: true,
+      message: "Weight Rejected Successfully",
+      data: WeightUpdate,
+    });
+  }
+  next();
+});
 
 exports.configuringApprovedActions = catchAsyncError(async (req, res, next) => {
-  // api for customers and meal planner
-  const {status,user,goal_weight,current_weight,weight_tracking_id} = req.body;
-  try {
-    const userWeightUpdate=await User.findOneAndUpdate(
-      { _id: user }, 
-      { $set: {goal_weight, current_weight } }, // Update fields
-      { new: true } 
-    )
-    if(goal_weight===current_weight){
-      const WeightUpdate=await WeightTracker.findOneAndUpdate(
-        { _id: weight_tracking_id }, 
-        { $set: { isCompleted:true } }, // Update fields
-        { new: true } 
-      )
+  const { status, user_id, goal_weight, current_weight, weight_tracking_id } =
+    req.body;
+  if (status === "approved") {
+    console.log("status is approved and it is being approved now ");
+    const userWeightUpdate = await User.findOneAndUpdate(
+      { _id: user_id },
+      { $set: { goal_weight, current_weight } }, // Update fields
+      { new: true }
+    );
+    var dataToupdate = {
+      status: "approved",
+    };
+    if (current_weight === goal_weight) {
+      console.log("weigth is equal and Setting goal is completed ");
+      dataToupdate = {
+        status: "approved",
+        isCompleted: true,
+      };
     }
-  }catch{
 
+    const WeightUpdate = await WeightTracker.findOneAndUpdate(
+      { _id: weight_tracking_id },
+      { $set: dataToupdate }, // Update fields
+      { new: true }
+    );
+    res.status(201).json({
+      success: true,
+      message: "Weight approved Successfully",
+      data: { userWeightUpdate, WeightUpdate },
+    });
   }
-
-  
-
-
-
-  
-
+  next();
 });
 
+exports.configuringEditActions = catchAsyncError(async (req, res, next) => {
+  const { status, user_id, goal_weight, current_weight, weight_tracking_id } =
+    req.body;
+  if (status === "edit") {
+    console.log("status is edit and it is being edit now ");
+    const userWeightUpdate = await User.findOneAndUpdate(
+      { _id: user_id },
+      { $set: { goal_weight, current_weight } }, // Update fields
+      { new: true }
+    );
 
+    var dataToupdate = {
+      status: "edit",
+      current_weight,
+      goal_weight,
+    };
+    if (current_weight === goal_weight) {
+      console.log("weigth is equal and Setting goal is completed ");
+      dataToupdate = {
+        status: "edit",
+        current_weight,
+        goal_weight,
+        isCompleted: true,
+      };
+    }
+
+    const WeightUpdate = await WeightTracker.findOneAndUpdate(
+      { _id: weight_tracking_id },
+      { $set: dataToupdate }, // Update fields
+      { new: true }
+    );
+    res.status(201).json({
+      success: true,
+      message: "Weight approved Successfully",
+      data: { WeightUpdate, userWeightUpdate },
+    });
+  } else {
+    new ErrorHander("Not a proper weight status ", 500);
+  }
+});
+
+exports.updatingUserDetail = catchAsyncError(async (req, res, next) => {
+  // api for customers and meal planner
+  const { status, user, goal_weight, current_weight, weight_tracking_id } =
+    req.body;
+  try {
+    const userWeightUpdate = await User.findOneAndUpdate(
+      { _id: user },
+      { $set: { goal_weight, current_weight } }, // Update fields
+      { new: true }
+    );
+    //set status to coreespoding in model
+    if (goal_weight === current_weight) {
+      const WeightUpdate = await WeightTracker.findOneAndUpdate(
+        { _id: weight_tracking_id },
+        { $set: { isCompleted: true } }, // Update fields
+        { new: true }
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Weight update  Successfully",
+      userWeightUpdate,
+    });
+  } catch (error) {}
+});
 
 exports.getWeight = catchAsyncError(async (req, res, next) => {
   try {
@@ -150,7 +238,12 @@ exports.getWeight = catchAsyncError(async (req, res, next) => {
         user: id,
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       });
-    } 
+    } else {
+      weightTrackerData = await WeightTracker.find({
+        user: id,
+        createdAt: { $gte: startOfDay, $lte: endOfDay },
+      });
+    }
     res.status(201).json({
       success: true,
       message: "Success",
@@ -160,10 +253,6 @@ exports.getWeight = catchAsyncError(async (req, res, next) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-
-
-
 
 // exports.userMealRecommendationFetch = catchAsyncError(
 //   async (req, res, next) => {

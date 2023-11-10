@@ -7,7 +7,11 @@ const {
   updateWeightStatus,
   handlingUpdateValidation,
   getWeight,
+  configuringActions,
+  updatingUserDetail,
+  configuringRejectedActions,
   configuringApprovedActions,
+  configuringEditActions,
 
 } = require("../weightTracker/controller");
 
@@ -31,8 +35,9 @@ router
     isAuthenticated("web"),
     authorizedRoles("dietitian", "admin"),
     handlingUpdateValidation,
-    updateWeightStatus,
-    configuringApprovedActions
+    configuringRejectedActions,
+    configuringApprovedActions,
+    configuringEditActions,
   );
 
 router
