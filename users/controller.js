@@ -122,11 +122,9 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
 
     req.body.image = data.location;
     req.body.profile_image_key = `user/profile/${data.key}`;
+  } else {
+    req.body.image = process.env.DEFAULT_PROFILE_IMAGE_URL;
   }
-else {
-  req.body.image = process.env.DEFAULT_PROFILE_IMAGE_URL;
- 
-}
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -173,47 +171,34 @@ else {
 // });
 
 exports.login = catchAsyncError(async (req, res, next) => {
-  const { email, password, type } = req.body;
+  const { email, password } = req.body;
+  if (!email || password) {
+    next(new ErrorHandler(`All field are required`, 400));
+  }
   let user;
-  if (email && password) {
-    if (!type) {
-      user = await User.findOne({ email: email }).select("+password");
-    } else {
-      if (type == "web") {
-        user = await dietitian.findOne({ email: email }).select("+password");
-      } else {
-        return next(new ErrorHander("Invalid Type  ", 400));
-      }
-    }
+  user = await User.findOne({ email: email }).select("+password");
 
-    if (user) {
-      console.log(user);
-      //  //user);
-      // const isMatch = password===user.password
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (user.email == email && isMatch) {
-        // Generate JWT Token
-        const token = jwt.sign(
-          { userID: user._id },
-          process.env.JWT_SECRET_KEY,
-          { expiresIn: "5d" }
-        );
+  if (user) {
+    return next(new ErrorHander("Email or password is not valid", 400));
+  }
+  console.log(user);
 
-        //res.send({"status": "success","message":"LOGIN sucessful","token": token})
-        res.status(200).json({
-          success: true,
-          message: "Login Successful",
-          token: token,
-          data: user,
-        });
-      } else {
-        return next(new ErrorHander("Email or password is not valid", 400));
-      }
-    } else {
-      return next(new ErrorHander("Email or password is not valid", 400));
-    }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    // Generate JWT Token
+    const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "5d",
+    });
+
+    //res.send({"status": "success","message":"LOGIN sucessful","token": token})
+    res.status(200).json({
+      success: true,
+      message: "Login Successful",
+      token: token,
+      data: user,
+    });
   } else {
-    return next(new ErrorHander("All fields are required", 400));
+    return next(new ErrorHander("Email or password is not valid", 400));
   }
 });
 
