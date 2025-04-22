@@ -11,11 +11,11 @@ const dietitianSchema = new mongoose.Schema(
     },
     id_card_number: {
       type: String,
-      required: [true, "Please enter the ID Card Number"],
+      // required: [true, "Please enter the ID Card Number"],
     },
     id_card_type: {
       type: String,
-      required: [true, "Please enter the ID Card Type"],
+      // required: [true, "Please enter the ID Card Type"],
       enum: ["AADHAR", "PAN", "LICENSE"],
     },
     last_name: {
@@ -84,84 +84,84 @@ const dietitianSchema = new mongoose.Schema(
     local_address: {
       address_line1: {
         type: String,
-        required: [true, "Please enter Address Line 1"],
+        // required: [true, "Please enter Address Line 1"],
       },
       address_line2: {
         type: String,
-        required: [true, "Please enter Address Line 2"],
+        // required: [true, "Please enter Address Line 2"],
       },
       city: {
         type: String,
-        required: [true, "Please enter City"],
+        // required: [true, "Please enter City"],
       },
       state: {
         type: String,
-        required: [true, "Please enter State"],
+        // required: [true, "Please enter State"],
       },
-      zip: {
-        type: String,
-        required: [true, "Please enter ZIP Code"],
-      },
+      // zip: {
+      //   type: String,
+      //   required: [true, "Please enter ZIP Code"],
+      // },
       country: {
         type: String,
-        required: [true, "Please enter Country"],
+        // required: [true, "Please enter Country"],
       },
     },
     local_guardian_address: {
       address_line1: {
         type: String,
-        required: [true, "Please enter Address Line 1"],
+        // required: [true, "Please enter Address Line 1"],
       },
       address_line2: {
         type: String,
-        required: [true, "Please enter Address Line 2"],
+        // required: [true, "Please enter Address Line 2"],
       },
       city: {
         type: String,
-        required: [true, "Please enter City"],
+        // required: [true, "Please enter City"],
       },
       state: {
         type: String,
-        required: [true, "Please enter State"],
+        // required: [true, "Please enter State"],
       },
       zip: {
         type: String,
-        required: [true, "Please enter ZIP Code"],
+        // required: [true, "Please enter ZIP Code"],
       },
       country: {
         type: String,
-        required: [true, "Please enter Country"],
+        // required: [true, "Please enter Country"],
       },
     },
     permanent_address: {
       address_line1: {
         type: String,
-        required: [true, "Please enter Address Line 1"],
+        // required: [true, "Please enter Address Line 1"],
       },
       address_line2: {
         type: String,
-        required: [true, "Please enter Address Line 2"],
+        // required: [true, "Please enter Address Line 2"],
       },
       city: {
         type: String,
-        required: [true, "Please enter City"],
+        // required: [true, "Please enter City"],
       },
       state: {
         type: String,
-        required: [true, "Please enter State"],
+        // required: [true, "Please enter State"],
       },
       zip: {
         type: String,
-        required: [true, "Please enter ZIP Code"],
+        // required: [true, "Please enter ZIP Code"],
       },
       country: {
         type: String,
-        required: [true, "Please enter Country"],
+        // required: [true, "Please enter Country"],
       },
     },
     profile_photo_key: {
       type: String,
-      required: [true, "Please enter the Photo ID"],
+      // required: [true, "Please enter the Photo ID"],
     },
     study_details: {
       type: String,
@@ -169,15 +169,15 @@ const dietitianSchema = new mongoose.Schema(
     },
     profile_photo: {
       type: String,
-      required: [true, "Please upload a Photo"],
+      // required: [true, "Please upload a Photo"],
     },
     id_card_photo: {
       type: String,
-      required: [true, "Please upload a Photo"],
+      // required: [true, "Please upload a Photo"],
     },
     id_card_photo_key: {
       type: String,
-      required: [true, "Please upload a ID Card Photo Key"],
+      // required: [true, "Please upload a ID Card Photo Key"],
     },
     experience: {
       type: String,

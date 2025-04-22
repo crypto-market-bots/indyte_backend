@@ -81,7 +81,7 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     country: req.body["permanent_address[country]"],
   };
 
-  const { profile_photo, id_card_photo } = req.files;
+  // const { profile_photo, id_card_photo } = req?.files;
 
   if (
     !email ||
@@ -101,9 +101,7 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
     !id_card_type ||
     !study_details ||
     !permanent_address ||
-    !profile_photo ||
     !experience ||
-    !id_card_photo ||
     !past_work_details
   ) {
     return next(new ErrorHander("All fields are required", 400));
@@ -165,40 +163,39 @@ exports.DietitianRegistration = catchAsyncError(async (req, res, next) => {
       id_card_number,
       id_card_type,
       study_details,
-      profile_photo,
       experience,
       past_work_details,
       // image: data.location,
       // profile_image_key: data.key,
     });
 
-    const profile_picture_data = await uploadAndPushImage(
-      "dietitian/profile",
-      profile_photo,
-      "profile_image",
-      email
-    );
+    // const profile_picture_data = await uploadAndPushImage(
+    //   "dietitian/profile",
+    //   profile_photo,
+    //   "profile_image",
+    //   email
+    // );
 
-    if (!profile_picture_data.location) return next(new ErrorHander("some error occured while uploading profile",400));
-    newDietitian.profile_photo = profile_picture_data.location;
-    newDietitian.profile_photo_key = profile_picture_data.key;
-    console.log(
-      "req.body.image",
-      profile_picture_data.location,
-      profile_picture_data.key
-    );
+    // if (!profile_picture_data.location) return next(new ErrorHander("some error occured while uploading profile",400));
+    // newDietitian.profile_photo = profile_picture_data.location;
+    // newDietitian.profile_photo_key = profile_picture_data.key;
+    // console.log(
+    //   "req.body.image",
+    //   profile_picture_data.location,
+    //   profile_picture_data.key
+    // );
 
-    const id_card_data = await uploadAndPushImage(
-      "dietitian/document",
-      id_card_photo,
-      "profile_image",
-      email
-    );
+    // const id_card_data = await uploadAndPushImage(
+    //   "dietitian/document",
+    //   id_card_photo,
+    //   "profile_image",
+    //   email
+    // );
 
-    if (!id_card_data.location) return next(new ErrorHander(data));
-    newDietitian.id_card_photo = id_card_data.location;
-    newDietitian.id_card_photo_key = id_card_data.key;
-    console.log("req.body.image", id_card_data.location, id_card_data.key);
+    // if (!id_card_data.location) return next(new ErrorHander(data));
+    // newDietitian.id_card_photo = id_card_data.location;
+    // newDietitian.id_card_photo_key = id_card_data.key;
+    // console.log("req.body.image", id_card_data.location, id_card_data.key);
 
     await newDietitian.save();
 

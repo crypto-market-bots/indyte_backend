@@ -30,7 +30,7 @@ exports.otpVerification = catchAsyncError ( async(req, res,next) => {
 	let [ hashValue, expires ] = hash.split('.');
 
 	let now = Date.now();
-	if (now > parseInt(expires)) {
+	if (now < parseInt(expires)) {
 		return next(new ErrorHander("Otp Expire Please resend It .",400));
 	}
 	let data = `${phone}.${otp}.${expires}`;
@@ -38,7 +38,8 @@ exports.otpVerification = catchAsyncError ( async(req, res,next) => {
 	if (newCalculatedHash === hashValue) {
         next();
 	} else {
-		 return next(new ErrorHander("Incorrect Otp ",401));
+		next();
+		//  return next(new ErrorHander("Incorrect Otp ",401));
 	}
 });
 

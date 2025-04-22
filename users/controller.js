@@ -108,7 +108,7 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
   req.body.weight_unit = weight_unit;
   req.body.height_unit = height_unit;
   req.body.intial_weight = weight;
-  if (profile_image) {
+  if (!profile_image) {
     const data = await uploadAndPushImage(
       "user/profile",
       profile_image,
@@ -293,8 +293,7 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   // Iterate through the mapping and update user properties
   for (const field in fieldMap) {
     if (req.body[field]) {
-      user[fieldMap[field]] = req.body[field];
-      console.log(user[fieldMap[field]], " ", req.body[field]);
+      user[fieldMap[field]] = req.body[field];``
     }
   }
 

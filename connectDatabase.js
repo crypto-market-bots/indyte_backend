@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const connectDatabase = () => {
   mongoose
     .connect(
-      "mongodb+srv://indyteindia:NyjyXuTxa1WXTiu1@cluster0.mwc4ecv.mongodb.net/?retryWrites=true&w=majority",
+      "mongodb+srv://bansallakshay081:Dl3AErJFwbA2Fckl@indyte-test.nk6g6sj.mongodb.net/indyte",
       { useNewUrlParser: true }
     )
     .then((data) => {

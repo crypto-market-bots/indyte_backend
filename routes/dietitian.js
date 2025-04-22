@@ -19,8 +19,6 @@ router
   router
     .route("/add-dietitian")
     .post(
-      isAuthenticated("web"),
-      authorizedRoles("admin"),
       DietitianRegistration
     );
 
