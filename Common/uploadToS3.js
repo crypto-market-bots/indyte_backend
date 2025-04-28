@@ -17,7 +17,7 @@ const s3 = new AWS.S3({
 });
 
 
-async function uploadAndPushImageV2(folder, image, imageName, unique_parameter) {
+async function uploadAndPushImage(folder, image, imageName, unique_parameter) {
   if (image) {
     try {
       const randomNumber = getRandomNumber(100000, 999999);
@@ -49,7 +49,7 @@ function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function uploadAndPushImage(folder,image, imageName, unique_parameter) {
+async function uploadAndPushImageAws(folder,image, imageName, unique_parameter) {
   if (image) {
     try {
       // Generate a random number using Math.random()

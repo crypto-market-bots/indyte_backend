@@ -1,5 +1,5 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { uploadAndPushImage, uploadAndPushImageV2 } = require("../Common/uploadToS3");
+const { uploadAndPushImage } = require("../Common/uploadToS3");
 
 const ErrorHander = require("../utils/errorhander");
 const { Meal, UserMealRecommendation } = require("./model");
@@ -291,7 +291,7 @@ exports.addMeal = data = catchAsyncError(async (req, res, next) => {
       steps: formattedSteps, // Include the steps array
     });
 
-    const meal_image_data = await uploadAndPushImageV2(
+    const meal_image_data = await uploadAndPushImage(
       "images/meal",
       meal_image,
       "meal_image",
