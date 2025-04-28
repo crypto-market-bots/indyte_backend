@@ -64,11 +64,11 @@ const mealSchema = new mongoose.Schema({
   },
   meal_image: {
     type: String,
-    required: true,
+    // required: true,
   },
   meal_image_key: {
     type: String,
-    required: true,
+    // required: true,
   },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,

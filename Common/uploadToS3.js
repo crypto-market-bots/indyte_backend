@@ -1,12 +1,49 @@
 const AWS = require("aws-sdk");
 const fs = require("fs");
 AWS.config.logger = console;
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+  cloud_name: 'ds0jyaabf',
+  api_key: '753487685725889',
+  api_secret: 'zBO0VG81Qa-UG1G2DHqAh-W1Ld0',
+});
+
 
 //s3 bucket crediantls
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
 });
+
+
+async function uploadAndPushImageV2(folder, image, imageName, unique_parameter) {
+  if (image) {
+    try {
+      const randomNumber = getRandomNumber(100000, 999999);
+      const publicId = `${imageName}-${unique_parameter}-${randomNumber}`;
+      
+      const uploadOptions = {
+        folder: folder, // Cloudinary folder
+        public_id: publicId,
+        resource_type: "image",
+        overwrite: true,
+        use_filename: true,
+      };
+
+      const uploadedResponse = await cloudinary.uploader.upload(image.tempFilePath, uploadOptions);
+
+      const data = {
+        key: uploadedResponse.public_id,
+        location: uploadedResponse.secure_url,
+      };
+      return data;
+    } catch (error) {
+      return `Failed to upload image ${imageName} to Cloudinary: ${error.message}`;
+    }
+  }
+  return;
+}
 
 function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -73,5 +110,6 @@ async function deleteS3Object(key) {
 
 module.exports = {
   uploadAndPushImage,
+  uploadAndPushImageV2,
   deleteS3Object,
 };

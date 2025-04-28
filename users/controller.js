@@ -222,6 +222,7 @@ exports.getUser = catchAsyncError(async (req, res, next) => {
   let user;
   if (from) {
     user = await dietitian.findById(req.user.id);
+    console.log(user);
   } else {
     user = await User.findById(req.user.id);
   }

@@ -1,5 +1,5 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { uploadAndPushImage } = require("../Common/uploadToS3");
+const { uploadAndPushImage, uploadAndPushImageV2 } = require("../Common/uploadToS3");
 
 const ErrorHander = require("../utils/errorhander");
 const { Meal, UserMealRecommendation } = require("./model");
@@ -267,7 +267,6 @@ exports.addMeal = data = catchAsyncError(async (req, res, next) => {
     if (
       !name ||
       !description ||
-      !meal_image ||
       !formattedNutrition ||
       !formatteRequiredIngredients
     ) {
@@ -292,13 +291,14 @@ exports.addMeal = data = catchAsyncError(async (req, res, next) => {
       steps: formattedSteps, // Include the steps array
     });
 
-    const meal_image_data = await uploadAndPushImage(
+    const meal_image_data = await uploadAndPushImageV2(
       "images/meal",
       meal_image,
       "meal_image",
       name
     );
 
+    console.log("meal_image_data", meal_image_data);
     if (!meal_image_data.location)
       return next(new ErrorHander("Couldn't Able to upload image"));
     newMeal.meal_image = meal_image_data.location;
@@ -322,6 +322,7 @@ exports.addMeal = data = catchAsyncError(async (req, res, next) => {
       data: savedMeal,
     });
   } catch (error) {
+    console.log("Error in addMeal:", error);
     // Handle any error that occurred during the process
     return next(new ErrorHander(error.message, 500));
   }
@@ -332,7 +333,7 @@ exports.addMealTemplate = catchAsyncError(async (req, res, next) => {
     console.log("add meal function Called");
     const data = req.body; // Assuming the data to create the meal is in the request body
     const { name, description, ytlink1 } = data;
-    const { meal_image } = req.files;
+    // const { meal_image } = req.files;
     const formattedNutrition = JSON.parse(data.nutritions);
     const formatteRequiredIngredients = JSON.parse(data.required_ingredients);
     const formattedSteps = JSON.parse(data.steps);
@@ -340,7 +341,6 @@ exports.addMealTemplate = catchAsyncError(async (req, res, next) => {
     if (
       !name ||
       !description ||
-      !meal_image ||
       !formattedNutrition ||
       !formatteRequiredIngredients
     ) {
@@ -399,6 +399,7 @@ exports.addMealTemplate = catchAsyncError(async (req, res, next) => {
     });
   } catch (error) {
     // Handle any error that occurred during the process
+    console.log("Error in addMealTemplate:", error);
     return next(new ErrorHander(error.message, 500));
   }
 });
