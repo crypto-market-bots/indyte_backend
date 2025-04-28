@@ -110,6 +110,5 @@ async function deleteS3Object(key) {
 
 module.exports = {
   uploadAndPushImage,
-  uploadAndPushImageV2,
   deleteS3Object,
 };
