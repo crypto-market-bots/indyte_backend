@@ -76,9 +76,10 @@ exports.userMealRecommendationFetchApp = catchAsyncError(
       if (type == "all") {
         mealRecommdation = await UserMealRecommendation.find({
           user: req.user.id,
-        }).populate({
-          path: "meal",
-        });
+        }).populate([
+          { path: "meal" },
+          { path: "assigned_by" }
+        ]);
       } else if (type === "date" && value) {
         console.log(value, "this is today date");
         const startOfDay = new Date(value);
@@ -91,9 +92,10 @@ exports.userMealRecommendationFetchApp = catchAsyncError(
         mealRecommdation = await UserMealRecommendation.find({
           user: req.user.id,
           date: { $gte: startOfDay, $lte: endOfDay },
-        }).populate({
-          path: "meal",
-        });
+        }).populate([
+          { path: "meal" },
+          { path: "assigned_by" }
+        ]);
       } else {
         const startOfDay = new Date(today);
         startOfDay.setHours(0, 0, 0, 0);
@@ -102,9 +104,10 @@ exports.userMealRecommendationFetchApp = catchAsyncError(
         mealRecommdation = await UserMealRecommendation.find({
           user: req.user.id,
           date: { $gte: startOfDay, $lte: endOfDay },
-        }).populate({
-          path: "meal",
-        });
+        }).populate([
+          { path: "meal" },
+          { path: "assigned_by" }
+        ]);
       }
 
       res.status(201).json({

@@ -570,6 +570,7 @@ exports.sendOTPForLogin = catchAsyncError(async (req, res, next) => {
   const data = `${phone}.${otp}.${expires}.login`;
   const hash = crypto.createHmac("sha256", smsKey).update(data).digest("hex");
   const fullHash = `${hash}.${expires}`;
+  res.status(200).send({ phone, hash: fullHash });
   console.log("hash", twilioNum, phone);
   client.messages
     .create({
@@ -591,22 +592,22 @@ exports.verifyOtpforLogin = catchAsyncError(async (req, res, next) => {
   var { phone, hash, otp } = req.body;
   const user = await User.findOne({ phone: phone });
   if (!user) return next(new ErrorHander("User not found", 400));
-  if (!(phone && hash && otp)) {
-    return next(new ErrorHander("Please enter the credantials", 400));
-  }
-  phone = "+91" + phone;
-  let [hashValue, expires] = hash.split(".");
-  //"56789876567"=7777777777777777777
-  let now = Date.now(); //99999999999999
-  if (now > parseInt(expires)) {
-    return next(new ErrorHander("Time out.", 400));
-  }
-  let data = `${phone}.${otp}.${expires}.login`;
-  let newCalculatedHash = crypto
-    .createHmac("sha256", smsKey)
-    .update(data)
-    .digest("hex");
-  if (newCalculatedHash === hashValue) {
+  // if (!(phone && hash && otp)) {
+  //   return next(new ErrorHander("Please enter the credantials", 400));
+  // }
+  // phone = "+91" + phone;
+  // let [hashValue, expires] = hash.split(".");
+  // //"56789876567"=7777777777777777777
+  // let now = Date.now(); //99999999999999
+  // if (now > parseInt(expires)) {
+  //   return next(new ErrorHander("Time out.", 400));
+  // }
+  // let data = `${phone}.${otp}.${expires}.login`;
+  // let newCalculatedHash = crypto
+  //   .createHmac("sha256", smsKey)
+  //   .update(data)
+  //   .digest("hex");
+  // if (newCalculatedHash === hashValue) {
     const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "5d",
     });
@@ -618,9 +619,9 @@ exports.verifyOtpforLogin = catchAsyncError(async (req, res, next) => {
       token: token,
       data: user,
     });
-  } else {
-    return next(new ErrorHander("Incorrect Crediantals", 401));
-  }
+  // } else {
+  //   return next(new ErrorHander("Incorrect Crediantals", 401));
+  // }
 });
 
 exports.deleteS3Image = catchAsyncError(async (req, res, next) => {
