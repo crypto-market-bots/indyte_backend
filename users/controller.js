@@ -122,11 +122,9 @@ exports.UserRegistration = catchAsyncError(async (req, res, next) => {
 
     req.body.image = data.location;
     req.body.profile_image_key = `user/profile/${data.key}`;
+  } else {
+    req.body.image = process.env.DEFAULT_PROFILE_IMAGE_URL;
   }
-else {
-  req.body.image = process.env.DEFAULT_PROFILE_IMAGE_URL;
- 
-}
   const doc = await User.create(req.body)
     .then(() => {
       res.status(200).send({
@@ -138,6 +136,115 @@ else {
       return next(new ErrorHander(error, 400));
     });
 });
+
+exports.createUser = catchAsyncError(async (req, res, next) => {
+  const {
+    email,
+    phone,
+    full_name,
+    password,
+    gender,
+    dob,
+    weight, // Use a single weight field (either kg or lbs)
+    height, // Use a single height field (either cm or ft/in)
+    goal_weight,
+    weight_unit, // Weight unit (lbs or kg)
+    height_unit, // Height unit (cm or ft)
+  } = req.body;
+  const profile_image = req?.files?.profile_image;
+
+  if (
+    !email ||
+    !phone ||
+    !full_name ||
+    !password ||
+    !gender ||
+    !dob ||
+    !weight ||
+    !height ||
+    !goal_weight ||
+    !weight_unit ||
+    !height_unit
+  ) {
+    return next(new ErrorHander("All fields are required", 400));
+  }
+
+  const user = await User.findOne({
+    $or: [{ email: email }, { phone: phone }],
+  });
+
+  if (user) {
+    return next(new ErrorHander("User Already Exists", 400));
+  }
+
+  let trimmedPassword = password.trim();
+
+  if (trimmedPassword.length < 6) {
+    return next(
+      new ErrorHander(
+        "Password should be greater than or equal to 6 Characters",
+        400
+      )
+    );
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashPassword = await bcrypt.hash(trimmedPassword, salt);
+
+  // Convert weight to kg if it's in lbs
+  let weight_kg = weight;
+  if (weight_unit === "lbs") {
+    weight_kg = weight * 0.453592;
+  }
+
+  // Convert height to cm if it's in ft
+  let height_cm = height;
+  if (height_unit === "ft") {
+    const [feet, inches] = height.split("'");
+    height_cm = parseFloat(feet) * 30.48 + parseFloat(inches) * 2.54;
+  }
+
+  // Calculate BMI
+  const bmi = (weight_kg / (height_cm / 100) ** 2).toFixed(2);
+
+  req.body.dob = new Date(dob);
+  req.body.password = hashPassword;
+  req.body.initial_weight = weight_kg; // Store initial weight in kg
+  req.body.bmi = null; // Include BMI in user registration
+
+  // Include weight_unit and height_unit
+  req.body.weight_unit = weight_unit;
+  req.body.height_unit = height_unit;
+  req.body.intial_weight = weight;
+  if (!profile_image) {
+    const data = await uploadAndPushImage(
+      "user/profile",
+      profile_image,
+      "profile_image",
+      email
+    );
+    console.log(data);
+    if (!data.location) {
+      return next(new ErrorHander(data));
+    }
+
+    req.body.image = data.location;
+    req.body.profile_image_key = `user/profile/${data.key}`;
+  } else {
+    req.body.image = process.env.DEFAULT_PROFILE_IMAGE_URL;
+  }
+  const doc = await User.create(req.body)
+    .then(() => {
+      res.status(200).send({
+        success: true,
+        message: "User Registration successfully",
+      });
+    })
+    .catch((error) => {
+      return next(new ErrorHander(error, 400));
+    });
+});
+
 
 // exports.loginUser = catchAsyncError(async (req, res, next) => {
 //   const { email, password } = req.body;
@@ -188,11 +295,45 @@ exports.login = catchAsyncError(async (req, res, next) => {
 
     if (user) {
       console.log(user);
-      //  //user);
-      // const isMatch = password===user.password
       const isMatch = await bcrypt.compare(password, user.password);
       if (user.email == email && isMatch) {
         // Generate JWT Token
+        const token = jwt.sign(
+          { userID: user._id },
+          process.env.JWT_SECRET_KEY,
+          { expiresIn: "5d" }
+        );
+
+        //res.send({"status": "success","message":"LOGIN sucessful","token": token})
+        res.status(200).json({
+          success: true,
+          message: "Login Successful",
+          token: token,
+          data: user,
+        });
+      } else {
+        return next(new ErrorHander("Email or password is not valid", 400));
+      }
+    } else {
+      return next(new ErrorHander("Email or password is not valid", 400));
+    }
+  } else {
+    return next(new ErrorHander("All fields are required", 400));
+  }
+});
+
+exports.loginUser = catchAsyncError(async (req, res, next) => {
+  const { phone, password, type } = req.body;
+  let user;
+  if (phone && password) {
+    user = await User.findOne({ phone: phone }).select("+password");
+
+    console.log('user user user ',user)
+
+    if (user) {
+      console.log(user);
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (isMatch) {
         const token = jwt.sign(
           { userID: user._id },
           process.env.JWT_SECRET_KEY,
@@ -294,7 +435,8 @@ exports.updateUserProfile = catchAsyncError(async (req, res, next) => {
   // Iterate through the mapping and update user properties
   for (const field in fieldMap) {
     if (req.body[field]) {
-      user[fieldMap[field]] = req.body[field];``
+      user[fieldMap[field]] = req.body[field];
+      ``;
     }
   }
 
